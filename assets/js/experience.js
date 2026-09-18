@@ -144,13 +144,20 @@
   const init = () => {
     addStyles();
     homeSections();
+
+    // These home sections are injected after the base reveal observer is created.
+    // Keep them visible so they never occupy space as invisible blocks.
+    document.querySelectorAll('.explore-deck .reveal,.journey-stage .reveal,.proof-band .reveal').forEach(el => {
+      el.classList.add('in-view');
+    });
+
     setTimeout(() => {
       journeyMotion();
       interactions();
       quickFinder();
+
       document.querySelectorAll('.explore-deck .reveal,.journey-stage .reveal,.proof-band .reveal').forEach(el => {
-        const r = el.getBoundingClientRect();
-        if (r.top < innerHeight*.95) el.classList.add('in-view');
+        el.classList.add('in-view');
       });
     }, 80);
   };
