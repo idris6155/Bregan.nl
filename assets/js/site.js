@@ -54,3 +54,7 @@
   function init(){injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
+
+
+/* BREGAN_EXPERIENCE_LOADER */
+(() => { const s=document.createElement('script'); s.src='assets/js/experience.js'; s.defer=true; document.body.appendChild(s); })();
