@@ -1419,3 +1419,163 @@ body[data-page="home"] .cta-box{
   body[data-page="home"] .proof-grid{grid-template-columns:1fr 1fr!important}
   body[data-page="home"] .cta-box{padding:28px 24px!important}
 }
+
+
+/* FINAL HOME FLOW + FOOTER COMPACTION */
+body[data-page="home"] .explore-deck,
+body[data-page="home"] .journey-stage,
+body[data-page="home"] .proof-band{
+  visibility:visible!important;
+}
+body[data-page="home"] .explore-deck .reveal,
+body[data-page="home"] .journey-stage .reveal,
+body[data-page="home"] .proof-band .reveal{
+  opacity:1!important;
+  transform:none!important;
+}
+
+/* Eliminate accidental tall wrappers around species/finder transition */
+body[data-page="home"] main>section:not(.hero):not(.journey-stage){
+  min-height:0!important;
+  height:auto!important;
+}
+body[data-page="home"] .expertise + section,
+body[data-page="home"] .section + .section-tight,
+body[data-page="home"] .section-tight + .section{
+  margin-top:0!important;
+  margin-bottom:0!important;
+}
+body[data-page="home"] .species-grid{
+  margin-bottom:0!important;
+}
+body[data-page="home"] .explore-deck{
+  padding:42px 0!important;
+}
+body[data-page="home"] .explore-head{
+  margin-bottom:20px!important;
+}
+body[data-page="home"] .explore-head .experience-title{
+  margin:8px 0 10px!important;
+  font-size:clamp(34px,4.4vw,52px)!important;
+}
+body[data-page="home"] .explore-rail{
+  gap:12px!important;
+}
+body[data-page="home"] .explore-tile{
+  min-height:315px!important;
+}
+body[data-page="home"] .explore-copy h3{
+  font-size:clamp(24px,2.5vw,34px)!important;
+  margin-bottom:8px!important;
+}
+body[data-page="home"] .explore-copy p{
+  margin-bottom:15px!important;
+}
+
+/* Footer should feel integrated, not like a tall blue empty block */
+.site-footer{
+  padding:46px 0 18px!important;
+}
+.footer-grid{
+  grid-template-columns:1.35fr .7fr 1fr .95fr!important;
+  gap:32px!important;
+  align-items:start!important;
+}
+.footer-brand{
+  min-width:0!important;
+}
+.brand-footer{
+  width:max-content!important;
+  min-width:0!important;
+  height:auto!important;
+  margin:0 0 14px!important;
+}
+.brand-footer::before{
+  display:none!important;
+}
+.brand-logo-image-footer{
+  width:154px!important;
+  max-height:82px!important;
+  height:auto!important;
+  object-fit:contain!important;
+  background:rgba(255,255,255,.97)!important;
+  border-radius:10px!important;
+  padding:5px 7px!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.12)!important;
+}
+.footer-brand p{
+  max-width:280px!important;
+  margin-bottom:12px!important;
+  line-height:1.5!important;
+}
+.footer-chip{
+  padding:6px 10px!important;
+  font-size:10px!important;
+}
+.site-footer h4{
+  margin-bottom:14px!important;
+}
+.site-footer a,
+.site-footer p{
+  margin-bottom:7px!important;
+  line-height:1.45!important;
+}
+.footer-bottom{
+  margin-top:32px!important;
+  padding-top:16px!important;
+}
+
+/* Dark footer background gets a subtle Bregan wave instead of empty navy */
+.site-footer{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(72% 110% at 8% 10%,rgba(102,183,220,.10),transparent 55%),
+    radial-gradient(70% 100% at 86% 95%,rgba(244,122,32,.10),transparent 58%),
+    #0c2942!important;
+}
+.site-footer::before{
+  content:'';
+  position:absolute;
+  right:-8%;
+  bottom:-45%;
+  width:50%;
+  height:90%;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 30% 30%,rgba(244,122,32,.12),rgba(244,122,32,0) 62%);
+  transform:rotate(-12deg);
+  pointer-events:none;
+}
+.site-footer>.container,
+.site-footer .footer-grid{
+  position:relative;
+  z-index:2;
+}
+
+/* medium screens */
+@media(max-width:1020px){
+  .footer-grid{
+    grid-template-columns:1.2fr 1fr!important;
+    gap:26px!important;
+  }
+  body[data-page="home"] .explore-rail{
+    grid-template-columns:1fr 1fr!important;
+  }
+  body[data-page="home"] .explore-tile:first-child{
+    grid-column:1/-1!important;
+    min-height:300px!important;
+  }
+}
+@media(max-width:680px){
+  .site-footer{padding:36px 0 16px!important}
+  .footer-grid{grid-template-columns:1fr!important;gap:22px!important}
+  .brand-logo-image-footer{width:140px!important;max-height:74px!important}
+  .footer-bottom{margin-top:24px!important}
+  body[data-page="home"] .explore-deck{padding:34px 0!important}
+  body[data-page="home"] .explore-rail{grid-template-columns:1fr!important}
+  body[data-page="home"] .explore-tile,
+  body[data-page="home"] .explore-tile:first-child{
+    min-height:285px!important;
+    grid-column:auto!important;
+  }
+}
