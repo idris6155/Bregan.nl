@@ -42,9 +42,9 @@
           '<p>' + copy('A faster way into the portfolio: choose the production system first, then narrow the challenge, product type and formulation need.','Ein schnellerer Einstieg ins Portfolio: zuerst Produktionssystem wählen, dann Herausforderung, Produkttyp und Formulierungsbedarf eingrenzen.') + '</p>' +
         '</div>' +
         '<div class="explore-rail">' +
-          tile('01','🐔',copy('Poultry performance','Geflügelleistung'),copy('Broilers and layers: premixes, enzymes, toxin control, gut health and feed-efficiency concepts.','Broiler und Legehennen: Premixe, Enzyme, Toxinkontrolle, Darmgesundheit und Futtereffizienz.'),'products.html?species=Poultry&lang='+lang) +
-          tile('02','◉',copy('Ruminant nutrition','Wiederkäuerernährung'),copy('Dairy and beef nutrition concepts built around utilization, resilience and consistent production.','Konzepte für Milch- und Mastrinder rund um Futterverwertung, Widerstandsfähigkeit und konstante Leistung.'),'products.html?species=Ruminants&lang='+lang) +
-          tile('03','≈',copy('Aquaculture','Aquakultur'),copy('Premix and functional additive options for aquafeed, nutrient availability and growth.','Premix- und funktionelle Zusatzstoffoptionen für Aquafutter, Nährstoffverfügbarkeit und Wachstum.'),'products.html?species=Aqua&lang='+lang) +
+          tile('01','🐔',copy('Poultry performance','Geflügelleistung'),copy('Broilers and layers: premixes, enzymes, toxin control, gut health and feed-efficiency concepts.','Broiler und Legehennen: Premixe, Enzyme, Toxinkontrolle, Darmgesundheit und Futtereffizienz.'),'poultry.html?lang='+lang) +
+          tile('02','◉',copy('Ruminant nutrition','Wiederkäuerernährung'),copy('Dairy and beef nutrition concepts built around utilization, resilience and consistent production.','Konzepte für Milch- und Mastrinder rund um Futterverwertung, Widerstandsfähigkeit und konstante Leistung.'),'ruminants.html?lang='+lang) +
+          tile('03','≈',copy('Aquaculture','Aquakultur'),copy('Premix and functional additive options for aquafeed, nutrient availability and growth.','Premix- und funktionelle Zusatzstoffoptionen für Aquafutter, Nährstoffverfügbarkeit und Wachstum.'),'aquaculture.html?lang='+lang) +
         '</div>' +
       '</div>';
     finder.parentNode.insertBefore(explore, finder);
