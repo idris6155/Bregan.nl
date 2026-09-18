@@ -716,3 +716,188 @@ body.has-compare .floating-tools{bottom:92px}
 @media(max-width:420px){
   .species-challenge-grid,.species-product-grid{grid-template-columns:1fr}
 }
+
+
+/* FINAL REALISTIC VISUAL PASS — exact brand, real photography, tighter home rhythm */
+.brand{min-width:190px;gap:0}
+.brand-logo-image{
+  display:block;width:176px;height:66px;object-fit:contain;object-position:left center;
+  background:#fff;border-radius:10px;padding:3px 5px;
+}
+.site-header:not(.scrolled) .brand-logo-image{box-shadow:0 6px 24px rgba(16,45,73,.06)}
+.site-header.scrolled .brand-logo-image{width:162px;height:58px}
+.brand-logo-image-footer{width:190px;height:92px;padding:6px 8px;background:#fff}
+.brand-logo,.brand-script,.brand-mark,.brand-word{display:none!important}
+
+/* Remove decorative/gimmick overlays so photography leads */
+.nutrient-field,.experience-cursor,.species-art,.journey-orbit{display:none!important}
+.hero-bg{filter:saturate(1.08) contrast(1.05);transform:none!important}
+.hero:after{
+  background:linear-gradient(90deg,rgba(248,252,253,.97) 0%,rgba(248,252,253,.92) 31%,rgba(248,252,253,.58) 48%,rgba(248,252,253,.12) 70%,rgba(248,252,253,.02) 100%)!important
+}
+.hero:before{opacity:.28}
+.hero{min-height:610px;height:min(70vh,700px);max-height:700px}
+.hero-content{padding-top:66px}
+.hero-copy{max-width:650px}
+.hero h1{font-size:clamp(48px,5.8vw,78px);line-height:.98}
+.hero p{font-size:18px;max-width:620px}
+.hero-stats{margin-top:30px;padding-top:15px}
+.floating-badge{width:128px;height:128px;right:6%;bottom:8%;animation:none}
+
+/* Home: remove excessive vertical emptiness while preserving breathing room */
+body[data-page="home"] .section{padding:54px 0}
+body[data-page="home"] .section-tight{padding:38px 0}
+body[data-page="home"] .expertise{padding:50px 0 48px}
+body[data-page="home"] .expertise + .section{padding-top:46px;padding-bottom:54px}
+body[data-page="home"] .products-section{padding:56px 0}
+body[data-page="home"] .process{padding:56px 0}
+body[data-page="home"] .quality-band{padding:54px 0}
+body[data-page="home"] .cta{padding:40px 0 56px!important}
+body[data-page="home"] .section-heading{margin-bottom:26px}
+body[data-page="home"] .section-heading h2{margin-bottom:12px}
+
+/* Capabilities: photography instead of icon tiles */
+.cap-grid{gap:14px}
+.cap-card{
+  min-height:285px;padding:0 22px 22px;overflow:hidden;border-radius:20px;
+  display:flex;flex-direction:column;background:#fff
+}
+.cap-icon{
+  width:calc(100% + 44px);height:118px;min-height:118px;margin:0 -22px 22px;border-radius:0;
+  background-size:cover!important;background-position:center!important;font-size:0!important;
+  position:relative
+}
+.cap-icon:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,33,50,.02),rgba(10,33,50,.20))}
+.cap-card:nth-child(1) .cap-icon{background-image:url('https://images.unsplash.com/photo-1748182447909-dfd52d869cd1?auto=format&fit=crop&fm=jpg&q=80&w=1200')!important}
+.cap-card:nth-child(2) .cap-icon{background-image:url('https://images.unsplash.com/photo-1764875471704-95de704ee3a2?auto=format&fit=crop&fm=jpg&q=80&w=1200')!important}
+.cap-card:nth-child(3) .cap-icon{background-image:url('https://images.unsplash.com/photo-1768677859674-42c517273db8?auto=format&fit=crop&fm=jpg&q=80&w=1200')!important}
+.cap-card:nth-child(4) .cap-icon{background-image:url('https://images.unsplash.com/photo-1762330468412-a62bb89c6d87?auto=format&fit=crop&fm=jpg&q=80&w=1200')!important}
+.cap-card h3{font-size:20px;margin-bottom:7px}
+.cap-card p{font-size:13px;line-height:1.48}
+
+/* Species cards: 100% real photography */
+.species-grid{gap:14px}
+.species-card{min-height:330px;padding:26px;background:#173047}
+.species-card:before{
+  filter:saturate(1.06) contrast(1.06);transform:none!important;
+  background-size:cover!important;background-repeat:no-repeat!important
+}
+.species-card:after{
+  background:linear-gradient(180deg,rgba(5,24,38,.03) 0%,rgba(5,24,38,.10) 35%,rgba(5,24,38,.78) 78%,rgba(5,24,38,.94) 100%)!important
+}
+.species-card.poultry{--bg:url('https://images.unsplash.com/photo-1767805233432-b11cd39b60a8?auto=format&fit=crop&fm=jpg&q=84&w=1500')}
+.species-card.ruminant{--bg:url('https://images.unsplash.com/photo-1651490542582-62be64100161?auto=format&fit=crop&fm=jpg&q=84&w=1500')}
+.species-card.aqua{--bg:url('https://images.unsplash.com/photo-1758535012952-67e5f5f133e7?auto=format&fit=crop&fm=jpg&q=84&w=1500')}
+.species-card.feedmills{--bg:url('https://images.unsplash.com/photo-1764875471704-95de704ee3a2?auto=format&fit=crop&fm=jpg&q=84&w=1500')}
+.species-card.poultry:before{background-position:center 52%!important}
+.species-card.ruminant:before{background-position:center 45%!important}
+.species-card.aqua:before{background-position:center 55%!important}
+.species-card.feedmills:before{background-position:center 50%!important}
+.species-card h3{font-size:25px;text-shadow:0 2px 14px rgba(0,0,0,.25)}
+.species-card p{color:#edf5f8;font-size:13px;line-height:1.46;text-shadow:0 1px 10px rgba(0,0,0,.22)}
+.species-card .arrow-round{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.18)}
+
+/* Real uploaded bag photography — no fake label overlay, no rotation */
+.product-visual{
+  height:238px;background:linear-gradient(145deg,#f5f7f5,#eef3f4);
+  overflow:hidden
+}
+.product-visual.branded-bag-visual{background:linear-gradient(145deg,#f7f6f2 0%,#f5f7f7 56%,#e9f1f4 100%)}
+.brand-bag-photo{
+  position:absolute;z-index:3;width:auto;height:92%;max-width:78%;object-fit:contain;
+  left:50%;top:50%;transform:translate(-50%,-49%);
+  filter:drop-shadow(0 15px 18px rgba(16,45,73,.14));
+  transition:transform .25s ease
+}
+.product-card:hover .brand-bag-photo{transform:translate(-50%,-51%) scale(1.025)}
+.product-bag-label,.product-wave-accent,.orb{display:none!important}
+.product-card{min-height:0}
+.product-card-body{padding:20px!important}
+.product-card-body h3{font-size:22px!important;margin:7px 0 8px!important}
+.product-card-body p{font-size:12.5px!important;line-height:1.45!important}
+.product-tags{margin-top:11px!important}
+.product-card-actions{padding-top:12px}
+
+/* Product detail: product photo is the hero, remove orbit/mockup styling */
+.detail-visual-stage{min-height:465px;background:linear-gradient(145deg,#f7f5f0,#eef4f5)}
+.detail-visual-stage:before,.detail-visual-stage:after{display:none!important}
+.detail-visual-stage .product-visual{min-height:465px;background:transparent}
+.detail-visual-stage .brand-bag-photo{height:90%;max-width:76%}
+.detail-float-chip{background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(16,45,73,.07)}
+
+/* Dedicated species pages: real hero photography instead of emoji/orbits */
+.species-hero{min-height:590px;background:#102d49}
+.species-hero:before,.species-hero:after{display:none}
+.species-hero-photo{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+.species-hero-photo:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,31,49,.90) 0%,rgba(8,31,49,.76) 42%,rgba(8,31,49,.20) 70%,rgba(8,31,49,.04) 100%)}
+.species-hero.poultry .species-hero-photo{background-image:url('https://images.unsplash.com/photo-1767805233432-b11cd39b60a8?auto=format&fit=crop&fm=jpg&q=85&w=2200')}
+.species-hero.ruminant .species-hero-photo{background-image:url('https://images.unsplash.com/photo-1651490542582-62be64100161?auto=format&fit=crop&fm=jpg&q=85&w=2200')}
+.species-hero.aqua .species-hero-photo{background-image:url('https://images.unsplash.com/photo-1758535012952-67e5f5f133e7?auto=format&fit=crop&fm=jpg&q=85&w=2200')}
+.species-hero-grid{padding-top:74px;position:relative;z-index:2}
+.species-hero h1{color:#fff;font-size:clamp(46px,5.6vw,72px)}
+.species-hero-copy>p{color:#e4edf2;font-size:18px}
+.species-hero-meta{border-color:rgba(255,255,255,.24)}
+.species-hero-meta strong{color:#fff}.species-hero-meta span{color:#c7d7e0}
+.species-hero .btn-ghost{background:rgba(255,255,255,.94)}
+.species-hero-art{display:none!important}
+
+/* Species products: real bag photos, denser cards */
+.species-product-grid{grid-template-columns:repeat(4,1fr);gap:12px}
+.species-product{min-height:335px}
+.species-product-visual{height:180px;background:linear-gradient(145deg,#f7f6f2,#edf3f4)}
+.species-bag-art{height:93%;width:auto;max-width:80%;object-fit:contain;filter:drop-shadow(0 13px 17px rgba(16,45,73,.14));transform:none}
+.species-product-name{display:none}
+.species-product-copy{padding:16px}
+.species-product-copy h3{font-size:18px;margin:7px 0}
+.species-product-copy p{font-size:11.5px;line-height:1.42}
+
+/* Five mapped challenges should fill the row, not leave a giant empty slot */
+.species-challenge-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.species-challenge-card{min-height:170px;padding:19px}
+.species-challenge-card h3{font-size:19px;margin:27px 0 6px}
+.species-challenge-card p{font-size:11px}
+.species-challenge-card b{width:34px;height:34px;right:16px;bottom:16px}
+
+/* Other large blocks compacted */
+.explore-deck{padding:62px 0}
+.explore-tile{min-height:390px}
+.journey-stage{padding:70px 0}
+.journey-visual{height:490px}
+.journey-step{min-height:38vh;padding:48px 0}
+.proof-band{padding:48px 0}
+.finder-banner{padding:38px}
+.solution-card{min-height:190px;padding:22px}
+.process-step{min-height:175px!important}
+.document-callout{padding:58px 0}
+.related-products.section{padding:58px 0}
+
+/* Responsive */
+@media(max-width:1100px){
+  .species-challenge-grid{grid-template-columns:repeat(3,1fr)}
+  .species-product-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .brand{min-width:156px}.brand-logo-image{width:150px;height:58px}
+  .hero{height:auto;min-height:620px}
+  .cap-grid{grid-template-columns:1fr 1fr}
+  .cap-card{min-height:260px}
+}
+@media(max-width:640px){
+  .site-header{height:70px}.site-header.scrolled{height:66px}
+  .brand{min-width:126px}.brand-logo-image,.site-header.scrolled .brand-logo-image{width:122px;height:48px;padding:2px 3px}
+  .hero{min-height:590px;padding:72px 0 30px}
+  .floating-badge{display:none}
+  body[data-page="home"] .section{padding:42px 0}
+  body[data-page="home"] .section-tight{padding:30px 0}
+  .cap-grid{grid-template-columns:1fr}.cap-card{min-height:245px}
+  .species-card{min-height:285px}
+  .species-grid{grid-template-columns:1fr}
+  .product-grid{grid-template-columns:1fr}
+  .product-visual{height:225px}
+  .species-challenge-grid{grid-template-columns:1fr 1fr}
+  .species-product-grid{grid-template-columns:1fr 1fr}
+  .species-hero{min-height:560px}
+}
+@media(max-width:430px){
+  .species-challenge-grid,.species-product-grid{grid-template-columns:1fr}
+}
