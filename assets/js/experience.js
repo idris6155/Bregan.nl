@@ -186,3 +186,64 @@
   };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded',init) : init();
 })();
+
+
+(() => {
+  const lang=(new URLSearchParams(location.search).get('lang')||localStorage.getItem('breganLang')||'en')==='de'?'de':'en';
+  const c=(en,de)=>lang==='de'?de:en;
+  const page=document.body.dataset.page||'home';
+  function addProductQuickNav(){
+    if(page!=='products'||document.querySelector('.quick-portfolio'))return;
+    const filters=document.querySelector('.filter-wrap');
+    if(!filters)return;
+    const el=document.createElement('section');
+    el.className='quick-portfolio';
+    el.innerHTML='<div class="container quick-portfolio-inner"><span class="quick-label">'+c('Quick explore','Schnell entdecken')+'</span>'+
+      '<button class="quick-pill" data-quick-type="">'+c('All products','Alle Produkte')+'</button>'+
+      '<button class="quick-pill" data-quick-type="Premixes">'+c('Premixes','Premixe')+'</button>'+
+      '<button class="quick-pill" data-quick-type="Feed Additives">'+c('Feed additives','Futterzusätze')+'</button>'+
+      '<button class="quick-pill" data-quick-species="Poultry">'+c('Poultry','Geflügel')+'</button>'+
+      '<button class="quick-pill" data-quick-species="Ruminants">'+c('Ruminants','Wiederkäuer')+'</button>'+
+      '<button class="quick-pill" data-quick-species="Aqua">'+c('Aquaculture','Aquakultur')+'</button></div>';
+    filters.parentNode.insertBefore(el,filters);
+    el.addEventListener('click',e=>{
+      const b=e.target.closest('.quick-pill');if(!b)return;
+      const type=document.getElementById('typeFilter'),sp=document.getElementById('speciesFilter');
+      if('quickType'in b.dataset&&type){type.value=b.dataset.quickType;type.dispatchEvent(new Event('change',{bubbles:true}));}
+      if(b.dataset.quickSpecies&&sp){sp.value=b.dataset.quickSpecies;sp.dispatchEvent(new Event('change',{bubbles:true}));}
+      el.querySelectorAll('.quick-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+      document.querySelector('.products-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+  }
+  function addChallengeLab(){
+    if(page!=='solutions'||document.querySelector('.challenge-lab'))return;
+    const process=document.querySelector('.process');
+    if(!process)return;
+    const lab=document.createElement('section');
+    lab.className='challenge-lab';
+    const item=(symbol,title,body,q)=>'<a class="challenge-item reveal" href="products.html?solution='+encodeURIComponent(q)+'&lang='+lang+'"><span class="challenge-symbol">'+symbol+'</span><div><h3>'+title+'</h3><p>'+body+'</p><b>↗</b></div></a>';
+    lab.innerHTML='<div class="container"><span class="experience-kicker">'+c('Challenge lab','Challenge Lab')+'</span><h2 class="experience-title">'+c('Choose the production problem, not the product name.','Wählen Sie das Produktionsproblem, nicht den Produktnamen.')+'</h2><p class="experience-lead">'+c('Bregan can be explored from the challenge backwards — a more useful route when the right product is not yet obvious.','Bregan lässt sich von der Herausforderung rückwärts erkunden – sinnvoll, wenn das richtige Produkt noch nicht feststeht.')+'</p><div class="challenge-grid">'+
+      item('01',c('Mycotoxin risk','Mykotoxinrisiko'),c('Protect feed value and animal performance under toxin pressure.','Futterwert und Tierleistung unter Toxindruck schützen.'),'Mycotoxins')+
+      item('02',c('Low growth rate','Niedrige Wachstumsrate'),c('Target utilization, gut function and the nutrition system behind growth.','Nährstoffnutzung, Darmfunktion und das System hinter dem Wachstum verbessern.'),'Low growth rate')+
+      item('03',c('Bioavailability','Bioverfügbarkeit'),c('Improve access to nutrients and trace-mineral value.','Zugang zu Nährstoffen und Spurenelementwert verbessern.'),'Bioavailability')+
+      item('04',c('Feed safety','Futtermittelsicherheit'),c('Build around hygiene, mold and Salmonella-related risk management.','Hygiene-, Schimmel- und Salmonellenrisiken systematisch adressieren.'),'Feed safety')+
+      item('05',c('Egg & meat quality','Ei- & Fleischqualität'),c('Connect nutrition with output quality and commercial value.','Ernährung mit Produktqualität und kommerziellem Wert verbinden.'),'Egg and meat quality')+
+      item('06',c('Antibiotic reduction','Antibiotikareduktion'),c('Explore functional alternatives and supportive nutrition concepts.','Funktionelle Alternativen und unterstützende Ernährungskonzepte erkunden.'),'Antibiotic reduction')+
+      '</div></div>';
+    process.parentNode.insertBefore(lab,process);
+  }
+  function addWorldStory(){
+    if(page!=='about'||document.querySelector('.world-story'))return;
+    const quality=document.querySelector('.quality-band');
+    if(!quality)return;
+    const el=document.createElement('section');
+    el.className='world-story';
+    el.innerHTML='<div class="container world-story-grid"><div class="world-map-card reveal"><span class="route-line route-a"></span><span class="route-line route-b"></span><span class="route-line route-c"></span><i class="map-node breda"></i><i class="map-node africa"></i><i class="map-node middle"></i><i class="map-node asia"></i><div class="map-caption"><small>'+c('Commercial base','Kommerzielle Basis')+'</small><strong>Breda → World</strong></div></div><div class="world-story-copy reveal"><span class="experience-kicker">'+c('Built to connect','Gebaut zum Verbinden')+'</span><h2>'+c('A Dutch base with an international operating rhythm.','Eine niederländische Basis mit internationalem Arbeitsrhythmus.')+'</h2><p>'+c('Bregan links producers, technical expertise and end-users. That means the commercial conversation, product choice, documentation and shipment route can be handled as one connected workflow.','Bregan verbindet Produzenten, technisches Know-how und Endanwender. So können kommerzielle Abstimmung, Produktauswahl, Dokumentation und Transportweg als zusammenhängender Workflow behandelt werden.')+'</p><div class="world-facts"><div class="world-fact"><strong>Breda</strong><span>'+c('The Netherlands','Niederlande')+'</span></div><div class="world-fact"><strong>Europe → Asia</strong><span>'+c('International market reach','Internationale Marktreichweite')+'</span></div><div class="world-fact"><strong>Road · Sea · Air</strong><span>'+c('Flexible logistics routes','Flexible Logistikwege')+'</span></div><div class="world-fact"><strong>Feed to fork</strong><span>'+c('Quality & traceability mindset','Qualitäts- & Rückverfolgbarkeitsansatz')+'</span></div></div></div></div>';
+    quality.parentNode.insertBefore(el,quality);
+  }
+  function init(){
+    addProductQuickNav();addChallengeLab();addWorldStory();
+    setTimeout(()=>document.querySelectorAll('.challenge-lab .reveal,.world-story .reveal').forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*.95)el.classList.add('in-view')}),60);
+  }
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
+})();
