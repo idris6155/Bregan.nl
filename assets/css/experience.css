@@ -369,3 +369,25 @@ body.has-compare .floating-tools{bottom:100px}
   .site-header,.site-footer,.floating-tools,.compare-tray,.detail-utility-actions,.modal,.navigator-modal,.compare-modal{display:none!important}
   body{background:#fff}.product-detail-hero{padding-top:20px!important}
 }
+
+
+/* Refined Bregan logo treatment */
+.brand{gap:6px;min-width:166px}
+.brand-logo{position:relative;display:inline-flex;align-items:center;min-width:128px;height:52px;color:#171717}
+.brand-logo svg{position:absolute;right:0;top:1px;width:58px;height:48px;z-index:1}
+.brand-script{
+  position:relative;z-index:2;display:block;color:#f47a20;
+  font-family:'Brush Script MT','Segoe Script','URW Chancery L',cursive;
+  font-size:34px;font-weight:700;line-height:1;letter-spacing:-.045em;
+  transform:rotate(-3deg);text-shadow:0 1px 0 rgba(255,255,255,.65)
+}
+.brand>small{position:relative;z-index:3;font:800 8px 'Manrope';letter-spacing:.12em;color:#6a7d8b;align-self:flex-end;margin:0 0 9px -2px}
+.brand-footer{color:#fff}
+.brand-footer .brand-logo{color:#fff}
+.brand-footer .brand-script{color:#f47a20;text-shadow:none}
+.brand-footer>small{color:#acc0ce}
+.site-header.scrolled .brand-script{filter:saturate(1.08)}
+@media(max-width:520px){
+  .brand{min-width:138px}.brand-logo{min-width:110px;height:46px}.brand-logo svg{width:50px;height:43px}
+  .brand-script{font-size:30px}.brand>small{display:none}
+}
