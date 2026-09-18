@@ -995,3 +995,35 @@ body[data-page="home"] .section-heading h2{margin-bottom:12px}
 
 .worldwide-grid{gap:42px!important}
 .logistics-card{margin-top:26px;padding:20px;gap:16px}
+
+
+/* Catalog density refinement */
+body[data-page="products"] #productGrid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+body[data-page="products"] .products-section{
+  padding:48px 0 64px;
+}
+body[data-page="products"] .filter-wrap{
+  padding:14px 0;
+}
+body[data-page="products"] .product-card-body{
+  min-height:220px;
+}
+body[data-page="products"] .product-card-body p{
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+@media(max-width:1200px){
+  body[data-page="products"] #productGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:850px){
+  body[data-page="products"] #productGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  body[data-page="products"] #productGrid{grid-template-columns:1fr}
+  body[data-page="products"] .products-section{padding:36px 0 48px}
+}
