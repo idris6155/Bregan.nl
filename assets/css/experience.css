@@ -901,3 +901,31 @@ body[data-page="home"] .section-heading h2{margin-bottom:12px}
 @media(max-width:430px){
   .species-challenge-grid,.species-product-grid{grid-template-columns:1fr}
 }
+
+
+/* Second realism pass: photo-led exploration cards */
+.explore-tile:nth-child(1):before{
+  background-image:url('https://images.unsplash.com/photo-1767805233432-b11cd39b60a8?auto=format&fit=crop&fm=jpg&q=84&w=1600')!important
+}
+.explore-tile:nth-child(2):before{
+  background-image:url('https://images.unsplash.com/photo-1651490542582-62be64100161?auto=format&fit=crop&fm=jpg&q=84&w=1600')!important;
+  background-position:center 45%!important
+}
+.explore-tile:nth-child(3):before{
+  background-image:url('https://images.unsplash.com/photo-1758535012952-67e5f5f133e7?auto=format&fit=crop&fm=jpg&q=84&w=1600')!important;
+  background-position:center 55%!important
+}
+.explore-tile:after{background:linear-gradient(180deg,rgba(5,25,40,.04) 15%,rgba(5,25,40,.16) 44%,rgba(5,25,40,.88) 100%)}
+.explore-icon{display:none!important}
+.explore-tile{padding:25px;min-height:370px}
+.explore-copy p{color:#edf5f8;font-size:13px;line-height:1.46}
+
+/* Keep hover subtle and photographic, not game-like */
+.cap-card:hover,.product-card:hover,.species-card:hover,.explore-tile:hover,.solution-card:hover,.species-product:hover{
+  transform:translateY(-3px)!important
+}
+.species-card:hover:before,.explore-tile:hover:before{transform:scale(1.018)!important}
+
+/* Remove abstract image substitutes in visual surfaces */
+.page-glow{display:none!important}
+.journey-photo{opacity:.54;filter:saturate(1.05) contrast(1.04)}
