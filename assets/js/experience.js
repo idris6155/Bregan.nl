@@ -247,3 +247,195 @@
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
+
+
+/* Interactive navigator, compare tray, bilingual insight helpers */
+(() => {
+  const PRODUCTS=window.BREGAN_PRODUCTS||[];
+  const params=new URLSearchParams(location.search);
+  const lang=(params.get('lang')||localStorage.getItem('breganLang')||'en')==='de'?'de':'en';
+  const c=(en,de)=>lang==='de'?de:en;
+  const esc=(s='')=>String(s).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  const page=document.body.dataset.page||'home';
+  let compareIds=[];
+  try{compareIds=JSON.parse(localStorage.getItem('breganCompare')||'[]').filter(id=>PRODUCTS.some(p=>p.id===id)).slice(0,3)}catch{compareIds=[]}
+
+  function applyBilingual(){
+    document.querySelectorAll('[data-bi-en]').forEach(el=>{
+      el.textContent=lang==='de'?el.dataset.biDe:el.dataset.biEn;
+    });
+    document.querySelectorAll('a[href]').forEach(a=>{
+      const href=a.getAttribute('href');
+      if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('tel:')||href.startsWith('http'))return;
+      try{
+        const u=new URL(href,location.href);
+        u.searchParams.set('lang',lang);
+        a.setAttribute('href',u.pathname.split('/').pop()+'?'+u.searchParams.toString()+(u.hash||''));
+      }catch{}
+    });
+  }
+
+  function floatingTools(){
+    if(document.querySelector('.floating-tools'))return;
+    const el=document.createElement('div');
+    el.className='floating-tools';
+    el.innerHTML='<button class="floating-tool primary" data-open-navigator><i>⌕</i><span>'+c('Find a solution','Lösung finden')+'</span></button>'+
+      '<button class="floating-tool" data-open-quote><i>↗</i><span>'+c('Request quote','Angebot anfordern')+'</span></button>';
+    document.body.appendChild(el);
+  }
+
+  function navigatorMarkup(){
+    if(document.getElementById('solutionNavigator'))return;
+    const species=[...new Set(PRODUCTS.flatMap(p=>p.species||[]))].sort();
+    const solutions=[...new Set(PRODUCTS.flatMap(p=>p.solutions||[]))].sort();
+    const el=document.createElement('div');
+    el.id='solutionNavigator';
+    el.className='navigator-modal';
+    el.setAttribute('aria-hidden','true');
+    el.innerHTML='<div class="navigator-backdrop" data-close-navigator></div><div class="navigator-panel">'+
+      '<button class="navigator-close" data-close-navigator aria-label="Close">×</button>'+
+      '<div class="navigator-head"><div class="eyebrow">BREGAN · SOLUTION NAVIGATOR</div><h2>'+c('Start with the animal and the challenge.','Beginnen Sie mit Tierart und Herausforderung.')+'</h2><p>'+c('We will narrow the current Bregan portfolio to the most relevant starting points.','Wir grenzen das aktuelle Bregan-Portfolio auf die relevantesten Ausgangspunkte ein.')+'</p></div>'+
+      '<div class="navigator-form"><div class="navigator-field"><label>'+c('Species','Tierart')+'</label><select id="navSpecies"><option value="">'+c('Choose species','Tierart wählen')+'</option>'+species.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div>'+
+      '<div class="navigator-field"><label>'+c('Challenge','Herausforderung')+'</label><select id="navChallenge"><option value="">'+c('Choose challenge','Herausforderung wählen')+'</option>'+solutions.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div>'+
+      '<button class="navigator-go" id="navigatorGo">'+c('Show matches','Treffer anzeigen')+'</button></div>'+
+      '<div class="navigator-results" id="navigatorResults"><div class="navigator-empty">'+c('Choose at least a species or production challenge.','Wählen Sie mindestens eine Tierart oder Produktionsherausforderung.')+'</div></div>'+
+      '</div>';
+    document.body.appendChild(el);
+    const speciesSelect=el.querySelector('#navSpecies');
+    const challengeSelect=el.querySelector('#navChallenge');
+    const updateChallenges=()=>{
+      const sp=speciesSelect.value;
+      const pool=sp?PRODUCTS.filter(p=>(p.species||[]).includes(sp)):PRODUCTS;
+      const allowed=[...new Set(pool.flatMap(p=>p.solutions||[]))].sort();
+      const current=challengeSelect.value;
+      challengeSelect.innerHTML='<option value="">'+c('Choose challenge','Herausforderung wählen')+'</option>'+allowed.map(x=>'<option>'+esc(x)+'</option>').join('');
+      if(allowed.includes(current))challengeSelect.value=current;
+    };
+    speciesSelect.addEventListener('change',updateChallenges);
+    el.querySelector('#navigatorGo').addEventListener('click',renderNavigatorResults);
+  }
+
+  function renderNavigatorResults(){
+    const sp=document.getElementById('navSpecies')?.value||'';
+    const ch=document.getElementById('navChallenge')?.value||'';
+    const host=document.getElementById('navigatorResults');
+    if(!host)return;
+    if(!sp&&!ch){host.innerHTML='<div class="navigator-empty">'+c('Choose at least a species or production challenge.','Wählen Sie mindestens eine Tierart oder Produktionsherausforderung.')+'</div>';return}
+    const scored=PRODUCTS.map(p=>{
+      let score=0;
+      if(sp&&(p.species||[]).includes(sp))score+=4;
+      if(ch&&(p.solutions||[]).includes(ch))score+=6;
+      if(sp&&!((p.species||[]).includes(sp)))score-=4;
+      if(ch&&!((p.solutions||[]).includes(ch)))score-=2;
+      return {p,score};
+    }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,4);
+    if(!scored.length){host.innerHTML='<div class="navigator-empty">'+c('No direct match is mapped yet. Send the challenge to our technical team and we will route it manually.','Noch kein direkter Treffer hinterlegt. Senden Sie die Herausforderung an unser technisches Team; wir ordnen sie manuell zu.')+'</div>';return}
+    host.innerHTML='<div class="navigator-result-grid">'+scored.map(({p})=>'<article class="navigator-result"><small>'+esc(p.type)+'</small><h3>'+esc(p.name)+'</h3><p>'+esc(p.summary?.[lang]||p.summary?.en||'')+'</p><a href="product.html?id='+encodeURIComponent(p.id)+'&lang='+lang+'">'+c('Open product','Produkt öffnen')+' ↗</a></article>').join('')+'</div>';
+  }
+
+  function openNavigator(){
+    navigatorMarkup();
+    const m=document.getElementById('solutionNavigator');
+    m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');
+  }
+  function closeNavigator(){
+    const m=document.getElementById('solutionNavigator');
+    if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open');
+  }
+
+  function compareTray(){
+    if(document.getElementById('compareTray'))return;
+    const tray=document.createElement('div');
+    tray.id='compareTray';tray.className='compare-tray';
+    tray.innerHTML='<div class="compare-tray-copy"><strong>'+c('Product comparison','Produktvergleich')+'</strong><span id="compareNames"></span></div><div class="compare-tray-actions"><button class="compare-clear" data-clear-compare>'+c('Clear','Leeren')+'</button><button class="compare-open" data-open-compare>'+c('Compare','Vergleichen')+'</button></div>';
+    document.body.appendChild(tray);
+    syncCompare();
+  }
+
+  function syncCompare(){
+    const tray=document.getElementById('compareTray');
+    if(!tray)return;
+    const items=compareIds.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+    tray.classList.toggle('show',items.length>0);
+    document.body.classList.toggle('has-compare',items.length>0);
+    const names=tray.querySelector('#compareNames');
+    if(names)names.textContent=items.length?items.map(p=>p.name).join(' · '):'';
+    const open=tray.querySelector('[data-open-compare]');
+    if(open)open.disabled=items.length<2;
+    document.querySelectorAll('[data-compare-product]').forEach(b=>b.classList.toggle('is-selected',compareIds.includes(b.dataset.compareProduct)));
+    localStorage.setItem('breganCompare',JSON.stringify(compareIds));
+  }
+
+  function toggleCompare(id){
+    if(!id)return;
+    if(compareIds.includes(id))compareIds=compareIds.filter(x=>x!==id);
+    else{
+      if(compareIds.length>=3)compareIds.shift();
+      compareIds.push(id);
+    }
+    syncCompare();
+  }
+
+  function compareModal(){
+    let m=document.getElementById('compareModal');
+    if(!m){
+      m=document.createElement('div');m.id='compareModal';m.className='compare-modal';document.body.appendChild(m);
+    }
+    const items=compareIds.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+    if(items.length<2)return;
+    const row=(label,getter)=>'<tr><th>'+label+'</th>'+items.map(p=>'<td>'+esc(getter(p)||'—')+'</td>').join('')+'</tr>';
+    m.innerHTML='<div class="compare-backdrop" data-close-compare></div><div class="compare-panel"><button class="compare-close" data-close-compare aria-label="Close">×</button><div class="compare-head"><div class="eyebrow">BREGAN · '+c('COMPARE','VERGLEICH')+'</div><h2>'+c('Compare products side by side.','Produkte direkt vergleichen.')+'</h2><p>'+c('Use this as a commercial overview. Confirm final technical suitability with the Bregan team.','Nutzen Sie dies als kommerzielle Übersicht. Die finale technische Eignung bitte mit dem Bregan-Team bestätigen.')+'</p></div><div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>'+c('Field','Merkmal')+'</th>'+items.map(p=>'<th>'+esc(p.name)+'<br><button class="compare-remove" data-remove-compare="'+esc(p.id)+'">'+c('Remove','Entfernen')+'</button></th>').join('')+'</tr></thead><tbody>'+
+      row(c('Type','Typ'),p=>p.type)+
+      row(c('Category','Kategorie'),p=>p.category)+
+      row(c('Species','Tierart'),p=>(p.species||[]).join(' · '))+
+      row(c('Solutions','Lösungen'),p=>(p.solutions||[]).join(' · '))+
+      row(c('Consistency','Konsistenz'),p=>p.consistency)+
+      row(c('Packaging','Verpackung'),p=>p.packaging)+
+      row(c('Inclusion','Einsatzrate'),p=>p.inclusion)+
+      '</tbody></table></div></div>';
+    m.classList.add('open');document.body.classList.add('modal-open');
+  }
+  function closeCompare(){const m=document.getElementById('compareModal');if(m)m.classList.remove('open');document.body.classList.remove('modal-open')}
+
+  function productUtilities(){
+    if(page!=='products'&&page!=='home'&&page!=='product')return;
+    if(page==='product'){
+      setTimeout(()=>{
+        const host=document.querySelector('.detail-copy .hero-actions');
+        if(!host||document.querySelector('.detail-utility-actions'))return;
+        const id=new URLSearchParams(location.search).get('id')||PRODUCTS[0]?.id;
+        const tools=document.createElement('div');
+        tools.className='detail-utility-actions';
+        tools.innerHTML='<button data-compare-product="'+esc(id||'')+'">'+c('Compare','Vergleichen')+'</button><button data-share-product>'+c('Share product','Produkt teilen')+'</button><button data-print-product>'+c('Print / PDF','Drucken / PDF')+'</button>';
+        host.insertAdjacentElement('afterend',tools);syncCompare();
+      },120);
+    }
+  }
+
+  async function shareCurrent(){
+    const p=PRODUCTS.find(x=>x.id===(new URLSearchParams(location.search).get('id')));
+    const data={title:(p?p.name+' | ':'')+'Bregan B.V.',text:p?(p.summary?.[lang]||p.summary?.en||''):'Bregan B.V.',url:location.href};
+    try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(location.href);alert(c('Product link copied.','Produktlink kopiert.'));}}catch{}
+  }
+
+  function events(){
+    document.addEventListener('click',e=>{
+      const nav=e.target.closest('[data-open-navigator]');if(nav){openNavigator();return}
+      if(e.target.closest('[data-close-navigator]')){closeNavigator();return}
+      const cmp=e.target.closest('[data-compare-product]');if(cmp){e.preventDefault();toggleCompare(cmp.dataset.compareProduct);return}
+      if(e.target.closest('[data-clear-compare]')){compareIds=[];syncCompare();return}
+      if(e.target.closest('[data-open-compare]')){compareModal();return}
+      if(e.target.closest('[data-close-compare]')){closeCompare();return}
+      const rm=e.target.closest('[data-remove-compare]');if(rm){compareIds=compareIds.filter(x=>x!==rm.dataset.removeCompare);syncCompare();compareModal();return}
+      if(e.target.closest('[data-share-product]')){shareCurrent();return}
+      if(e.target.closest('[data-print-product]')){window.print();return}
+    });
+    addEventListener('keydown',e=>{if(e.key==='Escape'){closeNavigator();closeCompare();}});
+  }
+
+  function init(){
+    applyBilingual();floatingTools();navigatorMarkup();compareTray();productUtilities();events();
+    setTimeout(syncCompare,180);
+  }
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
+})();
