@@ -129,37 +129,8 @@
     steps.forEach(s => obs.observe(s));
   };
   const interactions = () => {
-    if (matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const cursor = document.createElement('div');
-      cursor.className = 'experience-cursor';
-      document.body.appendChild(cursor);
-      addEventListener('mousemove', e => {
-        cursor.classList.add('show');
-        cursor.style.left = e.clientX+'px';
-        cursor.style.top = e.clientY+'px';
-      }, {passive:true});
-      document.addEventListener('mouseover', e => cursor.classList.toggle('hot',!!e.target.closest('a,button,.product-card,.species-card')));
-      document.addEventListener('mouseout', e => { if (!e.relatedTarget) cursor.classList.remove('show'); });
-      document.querySelectorAll('.species-card,.product-card,.cap-card').forEach(card => {
-        card.addEventListener('mousemove', e => {
-          const r = card.getBoundingClientRect();
-          const rx = ((e.clientY-r.top)/r.height-.5)*-7;
-          const ry = ((e.clientX-r.left)/r.width-.5)*9;
-          card.style.transform = 'perspective(900px) rotateX('+rx+'deg) rotateY('+ry+'deg) translateY(-5px)';
-        });
-        card.addEventListener('mouseleave', () => card.style.transform='');
-      });
-      const heroBg = document.querySelector('.hero-bg');
-      addEventListener('mousemove', e => {
-        if (!heroBg) return;
-        const x = (e.clientX / innerWidth - .5) * 10;
-        const y = (e.clientY / innerHeight - .5) * 7;
-        heroBg.style.transform = 'scale(1.045) translate('+(-x)+'px,'+(-y)+'px)';
-      }, {passive:true});
-    }
-    const glow = document.createElement('i');
-    glow.className='page-glow';
-    document.body.appendChild(glow);
+    // Deliberately restrained: photography and content lead the experience.
+    // Motion is limited to CSS hover/reveal transitions.
   };
   const quickFinder = () => {
     const f = document.querySelector('.finder-control .fake-input');
@@ -172,7 +143,6 @@
   };
   const init = () => {
     addStyles();
-    particles();
     homeSections();
     setTimeout(() => {
       journeyMotion();
