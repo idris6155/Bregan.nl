@@ -159,3 +159,65 @@
   .nutrient-particle,.journey-orbit,.ribbon-track,.floating-badge{animation:none!important}
   .hero-bg,.explore-tile,.explore-tile:before,.journey-step{transition:none!important}
 }
+
+
+/* Page-specific exploration */
+.page-hero{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(115deg,#f7fbfd 0%,#eef7fa 55%,#dceff6 100%)}
+.page-hero:before{content:'';position:absolute;inset:-10% -4% -10% 54%;z-index:-2;background-image:url('https://bregan.nl/application/files/9516/2148/0554/nutrition-h-1.jpg');background-size:cover;background-position:center;opacity:.24;filter:saturate(.8) contrast(.9)}
+.page-hero:after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#f7fbfd 0%,rgba(247,251,253,.94) 50%,rgba(247,251,253,.3) 100%)}
+.page-hero h1{max-width:800px}
+.page-hero p{max-width:690px}
+
+.quick-portfolio{background:#fff;border-bottom:1px solid #e7eef2}
+.quick-portfolio-inner{padding:24px 0;display:flex;align-items:center;gap:12px;overflow:auto;scrollbar-width:none}
+.quick-portfolio-inner::-webkit-scrollbar{display:none}
+.quick-portfolio .quick-label{font:800 10px 'Manrope';letter-spacing:.14em;text-transform:uppercase;color:#8aa0af;margin-right:8px;white-space:nowrap}
+.quick-pill{border:1px solid #dce8ee;background:#fff;border-radius:999px;padding:10px 16px;color:#38566d;font-weight:800;white-space:nowrap;transition:.2s}
+.quick-pill:hover,.quick-pill.active{border-color:var(--exp-orange);background:#fff6ef;color:#d96612;transform:translateY(-1px)}
+
+.challenge-lab{padding:110px 0;background:#071f33;color:#fff;position:relative;overflow:hidden}
+.challenge-lab:before{content:'';position:absolute;width:560px;height:560px;border-radius:50%;border:110px solid rgba(102,183,220,.06);right:-160px;top:-220px}
+.challenge-lab .experience-title{color:#fff}.challenge-lab .experience-lead{color:#b7ccd9}
+.challenge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:48px;position:relative;z-index:2}
+.challenge-item{min-height:260px;border:1px solid rgba(255,255,255,.13);border-radius:24px;padding:26px;display:flex;flex-direction:column;justify-content:space-between;transition:.3s;background:rgba(255,255,255,.025);backdrop-filter:blur(12px)}
+.challenge-item:hover{transform:translateY(-7px);border-color:rgba(244,122,32,.8);background:rgba(255,255,255,.055)}
+.challenge-item .challenge-symbol{font:800 42px/1 'Manrope';color:#83cde8}
+.challenge-item h3{font:800 25px/1.05 'Manrope';margin:34px 0 9px}
+.challenge-item p{font-size:14px;color:#b6cad6;margin:0 0 20px}
+.challenge-item b{display:inline-flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:var(--exp-orange)}
+
+.world-story{padding:110px 0;background:linear-gradient(180deg,#fff,#f4f9fb)}
+.world-story-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;align-items:center}
+.world-map-card{height:560px;border-radius:34px;background:#0f3452;position:relative;overflow:hidden;box-shadow:0 35px 90px rgba(12,48,74,.16)}
+.world-map-card:before{content:'';position:absolute;inset:0;background:
+  radial-gradient(circle at 26% 34%,rgba(102,183,220,.28),transparent 9%),
+  radial-gradient(circle at 48% 46%,rgba(244,122,32,.22),transparent 11%),
+  radial-gradient(circle at 74% 54%,rgba(102,183,220,.22),transparent 12%),
+  linear-gradient(145deg,#123b5d,#0a253d)}
+.route-line{position:absolute;height:2px;background:linear-gradient(90deg,rgba(255,255,255,.15),#f47a20,rgba(255,255,255,.15));transform-origin:left center;border-radius:2px;animation:routePulse 3.4s ease-in-out infinite}
+.route-a{width:260px;left:26%;top:38%;transform:rotate(17deg)}
+.route-b{width:310px;left:28%;top:46%;transform:rotate(7deg);animation-delay:.8s}
+.route-c{width:230px;left:30%;top:54%;transform:rotate(-15deg);animation-delay:1.4s}
+@keyframes routePulse{0%,100%{opacity:.26;filter:blur(0)}50%{opacity:1;filter:drop-shadow(0 0 8px rgba(244,122,32,.55))}}
+.map-node{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 8px rgba(255,255,255,.07);z-index:2}
+.map-node.breda{left:25%;top:37%;background:#f47a20;box-shadow:0 0 0 10px rgba(244,122,32,.12)}
+.map-node.africa{left:50%;top:54%}.map-node.middle{left:61%;top:47%}.map-node.asia{left:78%;top:55%}
+.map-caption{position:absolute;left:28px;bottom:26px;color:#d9e8f0;z-index:2}
+.map-caption small{display:block;color:#8dcfe7;font:800 10px 'Manrope';letter-spacing:.16em;text-transform:uppercase}
+.map-caption strong{font:800 28px 'Manrope'}
+.world-story-copy h2{font:800 clamp(42px,5vw,66px)/1 'Manrope';letter-spacing:-.045em;color:var(--exp-navy);margin:16px 0 20px}
+.world-story-copy p{color:#667d8e;font-size:18px}
+.world-facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+.world-fact{padding:18px;border-radius:18px;background:#fff;border:1px solid #e4edf2}
+.world-fact strong{display:block;font:800 18px 'Manrope';color:var(--exp-navy)}
+.world-fact span{font-size:13px;color:#718594}
+
+@media(max-width:900px){
+  .challenge-grid{grid-template-columns:1fr 1fr}
+  .world-story-grid{grid-template-columns:1fr}.world-map-card{height:440px}
+}
+@media(max-width:600px){
+  .page-hero:before{inset:0;opacity:.1}.page-hero:after{background:rgba(247,251,253,.92)}
+  .challenge-grid{grid-template-columns:1fr}.challenge-item{min-height:220px}
+  .world-map-card{height:360px}.world-facts{grid-template-columns:1fr}
+}
