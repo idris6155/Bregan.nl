@@ -1164,3 +1164,258 @@ body[data-page="products"] .product-card-body p{
   .brand::before{left:-17px;top:3px;width:170px;height:54px;opacity:.68}
   .brand-logo-image,.site-header.scrolled .brand-logo-image{width:138px!important;max-height:50px!important}
 }
+
+
+/* HOME MID-PAGE DENSITY PASS — remove empty stretches, keep premium breathing room */
+body[data-page="home"] main>section{
+  scroll-margin-top:78px;
+}
+body[data-page="home"] .section{
+  padding-top:46px!important;
+  padding-bottom:46px!important;
+}
+body[data-page="home"] .section-tight{
+  padding-top:30px!important;
+  padding-bottom:30px!important;
+}
+body[data-page="home"] .section-heading{
+  margin-bottom:22px!important;
+}
+body[data-page="home"] .section-heading h2{
+  margin-top:6px!important;
+  margin-bottom:8px!important;
+  line-height:.98!important;
+}
+body[data-page="home"] .section-heading p{
+  margin-top:0!important;
+  max-width:760px!important;
+}
+
+/* Distinguish adjacent sections so white space never feels empty */
+body[data-page="home"] main>section:nth-of-type(odd):not(.hero):not(.journey-stage):not(.cta){
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbfc 100%);
+}
+body[data-page="home"] main>section:nth-of-type(even):not(.hero):not(.journey-stage):not(.cta){
+  background:linear-gradient(180deg,#f7fafb 0%,#ffffff 100%);
+}
+
+/* Species block closer to preceding content */
+body[data-page="home"] .expertise{
+  padding-bottom:38px!important;
+}
+body[data-page="home"] .expertise + .section{
+  padding-top:34px!important;
+  padding-bottom:42px!important;
+}
+body[data-page="home"] .species-grid{
+  margin-top:0!important;
+}
+
+/* Finder as a compact bridge, not another tall section */
+body[data-page="home"] .section-tight .finder-banner{
+  padding:30px 34px!important;
+  min-height:0!important;
+}
+body[data-page="home"] .finder-banner h2{
+  margin:6px 0 8px!important;
+}
+body[data-page="home"] .finder-banner p{
+  margin:0!important;
+}
+
+/* Challenge cards: full, compact, photo-led */
+body[data-page="home"] .solution-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+body[data-page="home"] .solution-card{
+  min-height:214px!important;
+  padding:98px 20px 18px!important;
+}
+body[data-page="home"] .solution-card h3{
+  margin:16px 0 6px!important;
+  font-size:20px!important;
+}
+body[data-page="home"] .solution-card p{
+  margin:0!important;
+  line-height:1.42!important;
+}
+
+/* The biggest source of blank middle-page space: compact journey */
+body[data-page="home"] .journey-stage{
+  padding:54px 0!important;
+}
+body[data-page="home"] .journey-intro{
+  margin-bottom:28px!important;
+}
+body[data-page="home"] .journey-intro .experience-title{
+  margin:10px 0 12px!important;
+  font-size:clamp(38px,4.8vw,60px)!important;
+}
+body[data-page="home"] .journey-layout{
+  grid-template-columns:.82fr 1.18fr!important;
+  gap:28px!important;
+  align-items:start!important;
+}
+body[data-page="home"] .journey-visual{
+  height:410px!important;
+  top:92px!important;
+  border-radius:24px!important;
+}
+body[data-page="home"] .journey-center{
+  padding:28px!important;
+}
+body[data-page="home"] .journey-center strong{
+  font-size:clamp(34px,4vw,52px)!important;
+}
+body[data-page="home"] .journey-steps{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+}
+body[data-page="home"] .journey-step{
+  min-height:0!important;
+  height:auto!important;
+  padding:20px!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:18px!important;
+  background:rgba(255,255,255,.035)!important;
+  opacity:1!important;
+  transform:none!important;
+}
+body[data-page="home"] .journey-step:last-child{
+  grid-column:1/-1!important;
+}
+body[data-page="home"] .journey-step h3{
+  margin:10px 0 7px!important;
+  font-size:23px!important;
+}
+body[data-page="home"] .journey-step p{
+  margin:0!important;
+  font-size:13px!important;
+  line-height:1.48!important;
+}
+body[data-page="home"] .journey-tags{
+  margin-top:13px!important;
+  gap:6px!important;
+}
+body[data-page="home"] .journey-tags span{
+  padding:6px 9px!important;
+  font-size:10px!important;
+}
+
+/* Proof bar attaches directly to journey */
+body[data-page="home"] .proof-band{
+  padding:34px 0!important;
+}
+body[data-page="home"] .proof-grid{
+  gap:10px!important;
+}
+body[data-page="home"] .proof-card{
+  min-height:128px!important;
+  padding:20px!important;
+}
+body[data-page="home"] .proof-card strong{
+  font-size:25px!important;
+}
+
+/* Product section: no large void above/below */
+body[data-page="home"] .products-section{
+  padding:46px 0 48px!important;
+}
+body[data-page="home"] .products-section .product-grid{
+  gap:12px!important;
+}
+body[data-page="home"] #featuredProducts{
+  margin-top:0!important;
+}
+body[data-page="home"] .products-section .container>div[style*="margin-top"]{
+  margin-top:22px!important;
+}
+
+/* Process becomes a dense visual band */
+body[data-page="home"] .process{
+  padding:44px 0!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.96),rgba(245,249,251,.94)),
+    url('https://images.unsplash.com/photo-1764875471704-95de704ee3a2?auto=format&fit=crop&fm=jpg&q=75&w=1900') center/cover!important;
+}
+body[data-page="home"] .process-grid{
+  gap:9px!important;
+}
+body[data-page="home"] .process-step{
+  min-height:145px!important;
+  padding:18px!important;
+  background:rgba(255,255,255,.88)!important;
+  backdrop-filter:blur(5px);
+}
+body[data-page="home"] .process-step h3{
+  margin-bottom:7px!important;
+  font-size:18px!important;
+}
+body[data-page="home"] .process-step p{
+  margin:0!important;
+  font-size:11.5px!important;
+  line-height:1.4!important;
+}
+
+/* Worldwide and quality kept substantial but not sparse */
+body[data-page="home"] .worldwide-grid{
+  gap:28px!important;
+  align-items:center!important;
+}
+body[data-page="home"] .globe{
+  min-height:330px!important;
+}
+body[data-page="home"] .logistics-card{
+  margin-top:18px!important;
+}
+body[data-page="home"] .quality-band{
+  padding:42px 0!important;
+}
+body[data-page="home"] .quality-grid{
+  gap:28px!important;
+  align-items:center!important;
+}
+body[data-page="home"] .quality-seal{
+  height:260px!important;
+}
+
+/* CTA sits close to previous section */
+body[data-page="home"] .cta{
+  padding:28px 0 42px!important;
+}
+body[data-page="home"] .cta-box{
+  padding:34px 40px!important;
+}
+
+/* Mobile: avoid returning to long empty gaps */
+@media(max-width:900px){
+  body[data-page="home"] .journey-layout{
+    grid-template-columns:1fr!important;
+  }
+  body[data-page="home"] .journey-visual{
+    position:relative!important;
+    top:auto!important;
+    height:330px!important;
+  }
+  body[data-page="home"] .journey-steps{
+    grid-template-columns:1fr 1fr!important;
+  }
+  body[data-page="home"] .solution-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+@media(max-width:640px){
+  body[data-page="home"] .section{padding:36px 0!important}
+  body[data-page="home"] .section-tight{padding:24px 0!important}
+  body[data-page="home"] .journey-stage{padding:42px 0!important}
+  body[data-page="home"] .journey-steps,
+  body[data-page="home"] .solution-grid{
+    grid-template-columns:1fr!important;
+  }
+  body[data-page="home"] .journey-step:last-child{grid-column:auto!important}
+  body[data-page="home"] .journey-visual{height:285px!important}
+  body[data-page="home"] .proof-grid{grid-template-columns:1fr 1fr!important}
+  body[data-page="home"] .cta-box{padding:28px 24px!important}
+}
