@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://idris6155.github.io/Bregan.nl/sitemap.xml
