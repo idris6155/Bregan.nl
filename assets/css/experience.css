@@ -1429,3 +1429,284 @@ body.has-compare .floating-tools{bottom:100px}
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
+
+
+/* FINAL LAYOUT SAFETY PASS 2026-09-22 */
+
+/* Global anti-overlap rules */
+html,body{overflow-x:hidden}
+main,section,.container{min-width:0}
+h1,h2,h3,h4,p,a,span,strong,small,button,label{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+h1,h2,h3,h4{hyphens:none}
+img{max-width:100%;height:auto}
+.btn{white-space:normal;text-align:center;line-height:1.25}
+.section-heading h2,.display-title,.experience-title{
+  line-height:1.04!important;
+  text-wrap:balance;
+}
+.section-heading p,.lead{line-height:1.6!important}
+.hero h1,.page-hero h1,.species-hero h1,.detail-copy h1{
+  text-wrap:balance;
+  overflow:visible!important;
+}
+
+/* Header: switch before navigation gets cramped */
+.site-header{min-width:0}
+.desktop-nav{min-width:0}
+.desktop-nav a{font-size:13px!important}
+@media(max-width:1280px){
+  .desktop-nav,.desktop-quote{display:none!important}
+  .menu-toggle,.mobile-panel{display:block!important}
+  .header-actions{margin-left:auto!important}
+}
+
+/* Cards should grow naturally — never overlay copy */
+.cap-card,.species-card,.solution-card,.product-card,.process-step,.value-card,
+.challenge-item,.event-card,.contact-route-card,.species-stage,.species-challenge-card,
+.insight-card,.proof-card,.related-product-card{
+  height:auto!important;
+  max-height:none!important;
+}
+.product-card,.species-product,.related-product-card{
+  isolation:isolate;
+}
+.product-card-body,.species-product-copy,.related-product-card>div:last-child{
+  position:relative!important;
+  z-index:4!important;
+}
+.product-card h3,.species-product-copy h3,.related-product-card h3{
+  line-height:1.15!important;
+  overflow:visible!important;
+}
+.product-card p,.species-product-copy p,.related-product-card p{
+  line-height:1.55!important;
+  overflow:visible!important;
+}
+.product-card-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  margin-top:auto!important;
+}
+.product-card-actions>*{min-width:0}
+.product-meta,.product-tags,.detail-species-links,.application-tags,.journey-tags{
+  display:flex;
+  flex-wrap:wrap;
+}
+
+/* Rebuild product artwork background from scratch */
+.product-visual.branded-bag-visual,
+.species-product-visual{
+  position:relative!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
+  border-bottom:1px solid rgba(16,45,73,.06);
+}
+.product-visual.branded-bag-visual{
+  height:235px!important;
+  min-height:235px!important;
+  background:#f3f7f9!important;
+}
+.product-visual.branded-bag-visual:before{
+  content:''!important;
+  display:block!important;
+  position:absolute!important;
+  width:180px!important;
+  height:180px!important;
+  right:-46px!important;
+  top:-52px!important;
+  border-radius:50%!important;
+  background:rgba(102,183,220,.13)!important;
+  z-index:0!important;
+}
+.product-visual.branded-bag-visual:after{
+  content:''!important;
+  display:block!important;
+  position:absolute!important;
+  width:115%!important;
+  height:68%!important;
+  left:-8%!important;
+  right:auto!important;
+  bottom:-43%!important;
+  top:auto!important;
+  border:0!important;
+  border-top:2px solid rgba(102,183,220,.2)!important;
+  border-radius:50% 50% 0 0!important;
+  background:linear-gradient(180deg,rgba(102,183,220,.08),rgba(255,255,255,0))!important;
+  transform:none!important;
+  z-index:0!important;
+}
+
+/* Product-specific tones */
+.product-visual.product-tone-premix{
+  background:linear-gradient(145deg,#fff8f0,#edf4f7)!important;
+}
+.product-visual.product-tone-premix:before{background:rgba(244,122,32,.14)!important}
+.product-visual.product-tone-premix:after{
+  border-top-color:rgba(244,122,32,.22)!important;
+  background:linear-gradient(180deg,rgba(244,122,32,.08),transparent)!important;
+}
+.product-visual.product-tone-mineral{
+  background:linear-gradient(145deg,#fffbea,#eef4f3)!important;
+}
+.product-visual.product-tone-mineral:before{background:rgba(213,180,59,.15)!important}
+.product-visual.product-tone-mineral:after{
+  border-top-color:rgba(213,180,59,.25)!important;
+  background:linear-gradient(180deg,rgba(213,180,59,.08),transparent)!important;
+}
+.product-visual.product-tone-aqua{
+  background:linear-gradient(145deg,#edf9fb,#e8f2f7)!important;
+}
+.product-visual.product-tone-aqua:before{background:rgba(62,167,202,.14)!important}
+.product-visual.product-tone-aqua:after{
+  border-top-color:rgba(62,167,202,.24)!important;
+  background:linear-gradient(180deg,rgba(62,167,202,.08),transparent)!important;
+}
+.product-visual.product-tone-additive{
+  background:linear-gradient(145deg,#f3f8fb,#e9f1f5)!important;
+}
+
+/* Packaging image never collides with card copy */
+.brand-bag-photo{
+  position:absolute!important;
+  z-index:3!important;
+  left:50%!important;
+  top:50%!important;
+  width:auto!important;
+  height:82%!important;
+  max-width:72%!important;
+  object-fit:contain!important;
+  transform:translate(-50%,-50%)!important;
+  filter:drop-shadow(0 16px 20px rgba(16,45,73,.15))!important;
+}
+.official-product-photo{
+  height:76%!important;
+  max-width:78%!important;
+}
+.product-card-body{
+  padding:20px 21px 22px!important;
+  background:#fff!important;
+}
+.product-card h3{font-size:22px!important;margin:13px 0 8px!important}
+.product-card p{font-size:13px!important;margin:0 0 14px!important}
+.product-tags{margin:0 0 16px!important}
+.product-meta span,.product-tags span{
+  line-height:1.25!important;
+  white-space:normal!important;
+}
+
+/* Product detail: artwork and chips separated */
+.detail-visual-stage{
+  overflow:hidden!important;
+  isolation:isolate!important;
+}
+.detail-visual-stage .product-visual{
+  width:100%!important;
+  min-height:410px!important;
+  height:410px!important;
+  border-radius:24px!important;
+}
+.detail-visual-stage .brand-bag-photo{
+  height:78%!important;
+  max-width:68%!important;
+}
+.detail-chip-row{
+  position:relative!important;
+  z-index:5!important;
+  margin-top:12px!important;
+}
+.detail-float-chip{
+  position:static!important;
+  transform:none!important;
+}
+
+/* Species product cards use same clean background language */
+.species-product-visual{
+  height:178px!important;
+  min-height:178px!important;
+  background:linear-gradient(145deg,#f4f8fa,#eaf2f6)!important;
+}
+.species-product-visual:before{
+  content:''!important;
+  position:absolute!important;
+  width:140px!important;
+  height:140px!important;
+  right:-42px!important;
+  top:-44px!important;
+  border-radius:50%!important;
+  background:rgba(102,183,220,.13)!important;
+  z-index:0!important;
+}
+.species-bag-art{
+  left:50%!important;
+  top:50%!important;
+  height:82%!important;
+  max-width:70%!important;
+  transform:translate(-50%,-50%)!important;
+}
+.species-product-name{display:none!important}
+
+/* Hero / finder / event text stability */
+.finder-banner{align-items:stretch!important}
+.finder-banner>div{min-width:0}
+.finder-banner h2{overflow:visible!important}
+.finder-control{align-self:center!important}
+.event-card h3{overflow:visible!important}
+.event-date{white-space:normal!important}
+.portfolio-stat strong{line-height:1!important}
+
+/* Tablet */
+@media(max-width:900px){
+  .hero h1,.page-hero h1,.species-hero h1,.detail-copy h1{
+    font-size:clamp(40px,8vw,58px)!important;
+  }
+  .section-heading h2,.display-title,.experience-title{
+    font-size:clamp(32px,6vw,48px)!important;
+  }
+  .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .event-grid,.challenge-grid,.contact-route-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .finder-banner{grid-template-columns:1fr!important}
+}
+
+/* Mobile */
+@media(max-width:680px){
+  .container{width:calc(100% - 28px)!important}
+  .hero h1,.page-hero h1,.species-hero h1,.detail-copy h1{
+    font-size:clamp(38px,11vw,50px)!important;
+    line-height:1.04!important;
+    letter-spacing:-.035em!important;
+  }
+  .section-heading h2,.display-title,.experience-title{
+    font-size:clamp(31px,9vw,42px)!important;
+  }
+  .product-grid,.event-grid,.challenge-grid,.contact-route-grid,
+  .species-product-grid,.species-challenge-grid{
+    grid-template-columns:1fr!important;
+  }
+  .product-visual.branded-bag-visual{height:220px!important;min-height:220px!important}
+  .brand-bag-photo{height:80%!important;max-width:68%!important}
+  .official-product-photo{height:73%!important;max-width:76%!important}
+  .detail-visual-stage .product-visual{height:330px!important;min-height:330px!important}
+  .detail-visual-stage .brand-bag-photo{height:75%!important;max-width:72%!important}
+  .finder-banner{padding:25px 20px!important}
+  .finder-banner h2{font-size:34px!important}
+  .event-card{min-height:0!important}
+  .product-card-actions{flex-direction:column!important;align-items:stretch!important}
+  .compare-toggle{width:100%!important}
+  .text-link{justify-content:space-between!important}
+}
+
+/* Very narrow phones */
+@media(max-width:430px){
+  .hero h1,.page-hero h1,.species-hero h1,.detail-copy h1{font-size:38px!important}
+  .hero-stats{grid-template-columns:1fr!important}
+  .product-visual.branded-bag-visual{height:205px!important;min-height:205px!important}
+  .species-product-visual{height:165px!important;min-height:165px!important}
+}
