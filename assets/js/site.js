@@ -134,8 +134,9 @@
     return 'product-tone-additive';
   }
   function productVisual(p){
-    const bag=bagAsset(p);
-    return `<div class="product-visual branded-bag-visual ${productTone(p)}"><img class="brand-bag-photo" src="${bag}" alt="${esc(p.name)} packaging" loading="lazy"></div>`;
+    const bag=p.image||bagAsset(p);
+    const imageClass=p.image?'brand-bag-photo official-product-photo':'brand-bag-photo';
+    return `<div class="product-visual branded-bag-visual ${productTone(p)}"><img class="${imageClass}" src="${bag}" alt="${esc(p.name)} packaging" loading="lazy"></div>`;
   }
   function productCard(p){return `<article class="product-card reveal">${productVisual(p)}<div class="product-card-body"><div class="product-meta"><span>${esc(p.type)}</span><span>${esc(p.species[0])}</span></div><h3>${esc(p.name)}</h3><p>${esc(p.summary[state.lang])}</p><div class="product-tags">${p.solutions.slice(0,2).map(s=>`<span>${esc(s)}</span>`).join('')}</div><div class="product-card-actions"><a class="text-link" href="product.html?id=${encodeURIComponent(p.id)}&lang=${state.lang}">${tr('view_product')} <b>↗</b></a><button class="compare-toggle" type="button" data-compare-product="${esc(p.id)}">${state.lang==='de'?'Vergleichen':'Compare'}</button></div></div></article>`}
   function renderFeatured(){const w=document.getElementById('featuredProducts');if(!w)return;const ids=['bretox','bregrowth-perfection','bremax-1002','brenzyme-phos','fishmix','bre-zn-amino'];w.innerHTML=ids.map(id=>productCard(PRODUCTS.find(p=>p.id===id))).join('')}
