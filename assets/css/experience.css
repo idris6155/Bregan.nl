@@ -1087,7 +1087,7 @@ body[data-page="products"] .products-section{padding:48px 0 58px}
 .species-challenge-card{
   min-height:190px;
   border-radius:18px;
-  padding:22px;
+  padding:22px 22px 58px;
 }
 .species-challenge-card h3{font-size:21px;line-height:1.1;margin:34px 0 7px}
 .species-challenge-card p{font-size:12px;line-height:1.45;margin:0}
