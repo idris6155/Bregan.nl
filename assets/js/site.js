@@ -27,13 +27,14 @@
     return `<div class="modal" id="quoteModal" aria-hidden="true" role="dialog" aria-modal="true"><div class="modal-backdrop" data-close-quote></div><div class="modal-card"><button class="modal-close" data-close-quote aria-label="Close">×</button><div class="eyebrow">BREGAN · ${state.lang==='de'?'ANFRAGE':'INQUIRY'}</div><h2>${tr('quote')}</h2><p>${state.lang==='de'?'Teilen Sie uns kurz Ihr Ziel mit. Wir bereiten eine strukturierte E-Mail an unser Team vor.':'Tell us what you need. We will prepare a structured email to our team.'}</p>${formMarkup('quoteForm')}</div></div>`;
   }
 
-  function injectShell(){document.getElementById('site-header')?.insertAdjacentHTML('afterbegin',header());document.getElementById('site-footer')?.insertAdjacentHTML('afterbegin',footer());document.body.insertAdjacentHTML('beforeend',quoteModal());}
+  function injectShell(){document.querySelector('main')?.setAttribute('id','main-content');document.body.insertAdjacentHTML('afterbegin',`<a class="skip-link" href="#main-content">${state.lang==='de'?'Zum Inhalt':'Skip to content'}</a>`);document.getElementById('site-header')?.insertAdjacentHTML('afterbegin',header());document.getElementById('site-footer')?.insertAdjacentHTML('afterbegin',footer());document.body.insertAdjacentHTML('beforeend',quoteModal());}
   function applyLanguage(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[state.lang]?.[el.dataset.i18n];if(v)el.textContent=v});document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const v=T[state.lang]?.[el.dataset.i18nPlaceholder];if(v)el.placeholder=v});document.querySelectorAll('[data-lang-select]').forEach(b=>b.classList.toggle('active',b.dataset.langSelect===state.lang));}
   function switchLang(lang){localStorage.setItem('breganLang',lang);const u=new URL(location.href);u.searchParams.set('lang',lang);location.href=u.toString();}
   function openQuote(product=''){const m=document.getElementById('quoteModal');if(!m)return;m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');const i=m.querySelector('[name="product"]');if(i&&product)i.value=product;setTimeout(()=>m.querySelector('input')?.focus(),50)}
   function closeQuote(){const m=document.getElementById('quoteModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open')}
 
   function setupNavigation(){
+    document.querySelectorAll('.desktop-nav .is-active').forEach(a=>a.setAttribute('aria-current','page'));
     document.addEventListener('click',e=>{const l=e.target.closest('[data-lang-select]');if(l)switchLang(l.dataset.langSelect);const o=e.target.closest('[data-open-quote]');if(o)openQuote(o.dataset.product||'');if(e.target.closest('[data-close-quote]'))closeQuote()});
     const t=document.getElementById('menuToggle'),p=document.getElementById('mobilePanel');t?.addEventListener('click',()=>{const x=p.classList.toggle('open');t.classList.toggle('open',x);t.setAttribute('aria-expanded',String(x));p.setAttribute('aria-hidden',String(!x));document.body.classList.toggle('menu-open',x)});
   }
