@@ -1579,3 +1579,101 @@ body[data-page="home"] .explore-copy p{
     grid-column:auto!important;
   }
 }
+
+
+/* 2026-09-22 SITE-WIDE REFINEMENT — denser rhythm, fuller internal pages */
+body:not([data-page="home"]) main>section{min-height:0;height:auto}
+body:not([data-page="home"]) .section{padding:62px 0!important}
+body:not([data-page="home"]) .section-tight{padding:42px 0!important}
+body:not([data-page="home"]) .section-heading{margin-bottom:26px!important}
+body:not([data-page="home"]) .page-hero{padding:112px 0 48px!important;min-height:0!important}
+body:not([data-page="home"]) .page-hero h1{font-size:clamp(46px,6vw,74px)!important}
+body:not([data-page="home"]) .page-hero p{font-size:18px!important}
+body:not([data-page="home"]) .cta{padding:38px 0 50px!important}
+body:not([data-page="home"]) .cta-box{padding:38px 44px!important}
+
+.portfolio-snapshot{padding:34px 0;background:#0d2b46;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.portfolio-snapshot-grid{display:grid;grid-template-columns:1.5fr repeat(3,.55fr);gap:12px;align-items:stretch}
+.portfolio-snapshot-copy{padding:20px 26px 20px 0}
+.portfolio-snapshot-copy .experience-kicker{color:#ff9b4a}
+.portfolio-snapshot-copy h2{font:800 clamp(30px,3.2vw,44px)/1 'Manrope';letter-spacing:-.04em;margin:10px 0 10px;color:#fff}
+.portfolio-snapshot-copy p{max-width:620px;margin:0;color:#bdd0dc;font-size:15px}
+.portfolio-stat{min-height:132px;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(255,255,255,.035)}
+.portfolio-stat strong{font:800 34px/1 'Manrope';color:#fff}
+.portfolio-stat span{margin-top:8px;color:#9fc1d3;font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:800}
+
+body[data-page="products"] .quick-portfolio-inner{padding-top:13px!important;padding-bottom:13px!important}
+body[data-page="products"] .filter-wrap{padding:13px 0!important}
+body[data-page="products"] .products-section{padding:46px 0 56px!important}
+body[data-page="products"] .product-grid{gap:12px!important}
+body[data-page="products"] .product-visual{height:220px!important}
+body[data-page="products"] .product-card-body{padding:20px!important}
+body[data-page="products"] .product-count{margin-bottom:14px!important}
+
+body[data-page="solutions"] .challenge-lab{padding:64px 0!important}
+body[data-page="solutions"] .challenge-grid{gap:10px!important;margin-top:30px!important}
+body[data-page="solutions"] .challenge-item{min-height:205px!important;padding:22px!important}
+body[data-page="solutions"] .challenge-item h3{margin:26px 0 8px!important}
+body[data-page="solutions"] .process{padding:52px 0!important}
+body[data-page="solutions"] .species-card{min-height:305px!important}
+
+body[data-page="about"] .story-grid{gap:44px!important}
+body[data-page="about"] .story-art{min-height:420px!important}
+body[data-page="about"] .world-story{padding:62px 0!important}
+body[data-page="about"] .world-story-grid{gap:42px!important}
+body[data-page="about"] .world-map-card{height:430px!important}
+body[data-page="about"] .quality-band{padding-top:54px!important;padding-bottom:54px!important}
+
+body[data-species] .species-hero{min-height:560px!important}
+body[data-species] .species-hero-grid{padding-top:54px!important}
+body[data-species] .species-hero-meta{margin-top:24px!important;padding-top:15px!important}
+body[data-species] .species-challenges{padding:52px 0!important}
+body[data-species] .species-stages{padding:58px 0!important}
+body[data-species] .species-stage-intro{margin-bottom:26px!important}
+body[data-species] .species-stage{min-height:210px!important}
+body[data-species] .species-products{padding:56px 0!important}
+body[data-species] .species-final{padding:0 0 52px!important}
+
+body[data-page="contact"] main>.section{padding:46px 0 54px!important}
+body[data-page="contact"] .contact-layout{gap:42px!important}
+body[data-page="contact"] .form-panel{padding:32px!important}
+body[data-page="contact"] .contact-details{margin-top:24px!important}
+.contact-route-band{padding:54px 0;background:linear-gradient(180deg,#f4f9fb,#fff);border-top:1px solid #e4edf2}
+.contact-route-head{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px 42px;align-items:end;margin-bottom:28px}
+.contact-route-head .experience-kicker{grid-column:1/-1}
+.contact-route-head h2{font:800 clamp(34px,4vw,52px)/1 'Manrope';letter-spacing:-.04em;color:#0d2b46;margin:0}
+.contact-route-head p{margin:0;color:#657b8d;max-width:610px}
+.contact-route-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.contact-route-card{border:1px solid #dde8ee;border-radius:20px;padding:24px;background:#fff;min-height:185px}
+.contact-route-card>span{font:800 12px 'Manrope';letter-spacing:.12em;color:#f47a20}
+.contact-route-card h3{font:800 22px/1.08 'Manrope';color:#0d2b46;margin:34px 0 8px}
+.contact-route-card p{margin:0;color:#667d8d;font-size:14px}
+
+body[data-page="insights"] .insight-grid-section,
+body[data-page="insights"] .insight-faq{padding-top:54px!important;padding-bottom:54px!important}
+body[data-page="privacy"] main>.section{padding-top:44px!important;padding-bottom:52px!important}
+.product-detail-hero{padding-top:128px!important;padding-bottom:56px!important}
+.detail-specs.section,.product-story-section,.related-products.section{padding-top:52px!important;padding-bottom:52px!important}
+
+@media(max-width:1020px){
+  .portfolio-snapshot-grid{grid-template-columns:1fr 1fr 1fr}
+  .portfolio-snapshot-copy{grid-column:1/-1;padding-right:0}
+  .contact-route-head{grid-template-columns:1fr}
+  .contact-route-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:680px){
+  body:not([data-page="home"]) .page-hero{padding:96px 0 38px!important}
+  body:not([data-page="home"]) .section{padding:44px 0!important}
+  body:not([data-page="home"]) .cta{padding:28px 0 38px!important}
+  body:not([data-page="home"]) .cta-box{padding:28px 24px!important}
+  .portfolio-snapshot{padding:26px 0}
+  .portfolio-snapshot-grid{grid-template-columns:1fr}
+  .portfolio-stat{min-height:98px}
+  .contact-route-band{padding:42px 0}
+  .contact-route-grid{grid-template-columns:1fr}
+  .contact-route-card{min-height:155px}
+  body[data-species] .species-hero{min-height:520px!important}
+  body[data-species] .species-stages,
+  body[data-species] .species-products,
+  body[data-species] .species-challenges{padding:44px 0!important}
+}
