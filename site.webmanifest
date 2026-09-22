@@ -1,9 +1,19 @@
 {
   "name": "Bregan B.V.",
   "short_name": "Bregan",
-  "start_url": "./index.html",
+  "description": "Dutch animal nutrition company for premixes, feed additives and international feed solutions.",
+  "start_url": "./index.html?lang=en",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#102d49",
-  "icons": []
+  "lang": "en",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
