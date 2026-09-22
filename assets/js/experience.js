@@ -75,7 +75,7 @@
     proof.innerHTML =
       '<div class="container">' +
         '<div class="proof-grid">' +
-          proofCard('17',copy('core products already mapped in the digital portfolio','Kernprodukte bereits im digitalen Portfolio erfasst')) +
+          proofCard(String((window.BREGAN_PRODUCTS||[]).length),copy('core products already mapped in the digital portfolio','Kernprodukte bereits im digitalen Portfolio erfasst')) +
           proofCard('EN / DE',copy('complete bilingual navigation and product experience','vollständig zweisprachige Navigation und Produkterfahrung')) +
           proofCard('Road · Sea · Air',copy('international shipment routes considered from the start','internationale Transportwege von Anfang an berücksichtigt')) +
           proofCard('Breda → World',copy('Dutch commercial base with an international operating model','niederländische Basis mit internationalem Geschäftsmodell'),true) +
@@ -92,6 +92,38 @@
   function proofCard(value,label,orange){
     return '<div class="proof-card reveal'+(orange?' orange':'')+'"><strong>'+value+'</strong><span>'+label+'</span></div>';
   }
+  const homeEvents = () => {
+    if (page !== 'home' || document.querySelector('.event-roadshow')) return;
+    const anchor = document.querySelector('.proof-band') || document.querySelector('.products-section');
+    if (!anchor) return;
+    const section = document.createElement('section');
+    section.className = 'event-roadshow';
+    section.id = 'events';
+    const card = (flag,title,date,place,note) =>
+      '<article class="event-card reveal in-view"><div class="event-top"><span class="event-flag">'+flag+'</span><span class="event-date">'+date+'</span></div><h3>'+title+'</h3><p class="event-place">'+place+'</p><p class="event-note">'+note+'</p><button class="event-link" data-open-quote>'+copy('Plan a meeting','Termin anfragen')+' <b>↗</b></button></article>';
+    section.innerHTML =
+      '<div class="container"><div class="event-head"><div><span class="experience-kicker">'+copy('Meet Bregan worldwide','Bregan weltweit treffen')+'</span><h2 class="experience-title">'+copy('Our upcoming industry events.','Unsere kommenden Branchentermine.')+'</h2></div><p>'+copy('Meet the Bregan team around animal nutrition, premixes, feed additives and international supply opportunities.','Treffen Sie das Bregan-Team rund um Tierernährung, Premixe, Futterzusätze und internationale Liefermöglichkeiten.')+'</p></div><div class="event-grid">'+
+      card(copy('NEXT','NÄCHSTER'),'VIV Africa 2026','07–08 OCT 2026',copy('Kigali · Rwanda','Kigali · Ruanda'),copy('A focused meeting point for feed-to-food professionals across Sub-Saharan Africa.','Ein zentraler Treffpunkt für Feed-to-Food-Profis in Subsahara-Afrika.'))+
+      card('2027','VIV Select Türkiye 2027','09–11 JUN 2027',copy('Istanbul · Türkiye','Istanbul · Türkei'),copy('Connect with Bregan in one of the region’s key livestock and animal nutrition markets.','Treffen Sie Bregan in einem der wichtigsten regionalen Märkte für Tierhaltung und Tierernährung.'))+
+      card('2027','VIV MEA 2027','23–25 NOV 2027',copy('Abu Dhabi · UAE','Abu Dhabi · VAE'),copy('Meet around feed, animal health and commercial opportunities across the MENA region.','Treffen rund um Futter, Tiergesundheit und kommerzielle Chancen in der MENA-Region.'))+
+      '</div></div>';
+    anchor.insertAdjacentElement('afterend',section);
+  };
+
+  const enhanceQualityBand = () => {
+    if (page !== 'home') return;
+    const host = document.querySelector('.quality-copy');
+    if (!host || host.querySelector('.quality-credentials')) return;
+    const el = document.createElement('div');
+    el.className = 'quality-credentials';
+    const item = (title,body) => '<div class="quality-credential"><strong>'+title+'</strong><span>'+body+'</span></div>';
+    el.innerHTML =
+      item('GMP+',copy('Bregan presents itself as a GMP+ certified corporation.','Bregan weist sich als GMP+-zertifiziertes Unternehmen aus.'))+
+      item('HACCP',copy('Quality and traceability supported through a HACCP system.','Qualität und Rückverfolgbarkeit werden durch ein HACCP-System unterstützt.'))+
+      item(copy('Certified partner network','Zertifiziertes Partnernetzwerk'),copy('Production partners are described as holding GMP+ and/or FAMI-QS certification.','Produktionspartner werden mit GMP+- und/oder FAMI-QS-Zertifizierung beschrieben.'));
+    host.appendChild(el);
+  };
+
   const journeyMotion = () => {
     const steps = [...document.querySelectorAll('.journey-step')];
     if (!steps.length) return;
@@ -134,16 +166,26 @@
   };
   const quickFinder = () => {
     const f = document.querySelector('.finder-control .fake-input');
-    if (!f) return;
-    f.setAttribute('role','button');
-    f.setAttribute('tabindex','0');
-    const go = () => { location.href='products.html?lang='+lang; };
-    f.addEventListener('click',go);
-    f.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go();});
+    if (!f || f.dataset.searchReady) return;
+    f.dataset.searchReady='1';
+    f.classList.add('finder-search');
+    f.removeAttribute('role');
+    f.removeAttribute('tabindex');
+    f.innerHTML='<input id="homeProductSearch" type="search" autocomplete="off" placeholder="'+copy('Search product, challenge or species','Produkt, Herausforderung oder Tierart suchen')+'" aria-label="'+copy('Search Bregan products','Bregan-Produkte suchen')+'"><button type="button" aria-label="'+copy('Search','Suchen')+'">⌕</button>';
+    const input=f.querySelector('input');
+    const button=f.querySelector('button');
+    const go=()=>{
+      const q=(input.value||'').trim();
+      location.href='products.html?lang='+lang+(q?'&q='+encodeURIComponent(q):'');
+    };
+    button.addEventListener('click',go);
+    input.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
   };
   const init = () => {
     addStyles();
     homeSections();
+    homeEvents();
+    enhanceQualityBand();
 
     // These home sections are injected after the base reveal observer is created.
     // Keep them visible so they never occupy space as invisible blocks.
