@@ -42,6 +42,77 @@
 
   function setupForms(){document.querySelectorAll('.inquiry-form').forEach(form=>{if(form.dataset.ready)return;form.dataset.ready='1';form.addEventListener('submit',e=>{e.preventDefault();const er=form.querySelector('.form-error');if(!form.checkValidity()){er.textContent=tr('form_required');form.reportValidity();return}er.textContent='';const d=Object.fromEntries(new FormData(form).entries());const subject=`Bregan website inquiry — ${d.company||d.name}${d.product?' — '+d.product:''}`;const body=['BREGAN WEBSITE INQUIRY','',`Company: ${d.company||'-'}`,`Name: ${d.name||'-'}`,`Email: ${d.email||'-'}`,`Phone: ${d.phone||'-'}`,`Your country: ${d.country||'-'}`,`Target market: ${d.targetMarket||'-'}`,`Species / segment: ${d.species||'-'}`,`Product / interest: ${d.product||'-'}`,`Estimated quantity: ${d.quantity||'-'}`,`Documents needed: ${d.documents||'-'}`,'','Message:',d.message||'-','','— Sent from the Bregan GitHub Pages website'].join('\n');showMailFallback(subject,body);setTimeout(()=>{location.href=`mailto:info@bregan.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`},150)})})}
 
+
+  function setupSeo(){
+    const file=location.pathname.split('/').pop()||'index.html';
+    const basePath=location.pathname.slice(0,location.pathname.lastIndexOf('/')+1);
+    const baseUrl=location.origin+basePath;
+    const descriptions={
+      'index.html':state.lang==='de'?'Bregan B.V. ist ein niederländisches Unternehmen für Tierernährung mit Premixen, Futterzusätzen und internationalen Futterlösungen.':'Bregan B.V. is a Dutch animal nutrition company for premixes, feed additives and international feed solutions.',
+      'products.html':state.lang==='de'?'Entdecken Sie Bregan Premixe und Spezialfutterzusätze für Geflügel, Aquakultur und Wiederkäuer.':'Explore Bregan premixes and specialty feed additives for poultry, aquaculture and ruminants.',
+      'solutions.html':state.lang==='de'?'Bregan Futterlösungen nach Tierart, Produktionsherausforderung und Anwendung.':'Bregan feed solutions organized by species, production challenge and application.',
+      'about.html':state.lang==='de'?'Erfahren Sie mehr über Bregan B.V., ein niederländisches Tierernährungsunternehmen mit Sitz in Breda.':'Learn about Bregan B.V., a Dutch animal nutrition company based in Breda.',
+      'insights.html':state.lang==='de'?'Praktische Einblicke in Tierernährung, Futtereffizienz, Futtermittelsicherheit und Formulierung.':'Practical insights on animal nutrition, feed efficiency, feed safety and formulation.',
+      'contact.html':state.lang==='de'?'Kontaktieren Sie Bregan B.V. für Produktinformationen, technische Unterlagen und Angebote.':'Contact Bregan B.V. for product information, technical documents and quotations.',
+      'poultry.html':state.lang==='de'?'Bregan Lösungen für Broiler und Legehennen: Premixe, Enzyme, Darmgesundheit, Toxinkontrolle und Futtereffizienz.':'Bregan poultry solutions for broilers and layers: premixes, enzymes, gut health, toxin control and feed efficiency.',
+      'ruminants.html':state.lang==='de'?'Bregan Ernährungslösungen für Milch- und Mastrinder mit Fokus auf Nutzung, Mineralstoffe und konstante Leistung.':'Bregan ruminant nutrition solutions for dairy and beef with focus on utilization, minerals and consistent performance.',
+      'aquaculture.html':state.lang==='de'?'Bregan Premixe und funktionelle Futterzusätze für moderne Aquakultur und Aquafutter.':'Bregan premixes and functional feed additives for modern aquaculture and aquafeed.',
+      'privacy.html':state.lang==='de'?'Datenschutzhinweise für die Bregan B.V. Website.':'Privacy information for the Bregan B.V. website.'
+    };
+    let description=descriptions[file]||document.querySelector('meta[name="description"]')?.content||'Bregan B.V.';
+    if(file==='product.html'){
+      description=document.querySelector('.detail-copy .lead')?.textContent?.trim()||description;
+    }
+    const ensureMeta=(selector,attrs)=>{
+      let el=document.head.querySelector(selector);
+      if(!el){el=document.createElement('meta');document.head.appendChild(el);}
+      Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+      return el;
+    };
+    const canonicalParams=new URLSearchParams();
+    canonicalParams.set('lang',state.lang);
+    if(file==='product.html'){
+      const id=new URLSearchParams(location.search).get('id');
+      if(id)canonicalParams.set('id',id);
+    }
+    const canonical=baseUrl+file+'?'+canonicalParams.toString();
+    let link=document.head.querySelector('link[rel="canonical"]');
+    if(!link){link=document.createElement('link');link.rel='canonical';document.head.appendChild(link);}
+    link.href=canonical;
+    ['en','de'].forEach(code=>{
+      let alt=document.head.querySelector('link[rel="alternate"][hreflang="'+code+'"]');
+      if(!alt){alt=document.createElement('link');alt.rel='alternate';alt.hreflang=code;document.head.appendChild(alt);}
+      const q=new URLSearchParams(canonicalParams);q.set('lang',code);alt.href=baseUrl+file+'?'+q.toString();
+    });
+    let xd=document.head.querySelector('link[rel="alternate"][hreflang="x-default"]');
+    if(!xd){xd=document.createElement('link');xd.rel='alternate';xd.hreflang='x-default';document.head.appendChild(xd);}
+    const xq=new URLSearchParams(canonicalParams);xq.set('lang','en');xd.href=baseUrl+file+'?'+xq.toString();
+    const title=document.title;
+    const logo=baseUrl+'assets/images/bregan-logo.webp?v=4';
+    ensureMeta('meta[name="description"]',{name:'description',content:description});
+    ensureMeta('meta[name="robots"]',{name:'robots',content:'index,follow,max-image-preview:large'});
+    ensureMeta('meta[property="og:title"]',{property:'og:title',content:title});
+    ensureMeta('meta[property="og:description"]',{property:'og:description',content:description});
+    ensureMeta('meta[property="og:type"]',{property:'og:type',content:file==='product.html'?'product':'website'});
+    ensureMeta('meta[property="og:url"]',{property:'og:url',content:canonical});
+    ensureMeta('meta[property="og:image"]',{property:'og:image',content:logo});
+    ensureMeta('meta[property="og:site_name"]',{property:'og:site_name',content:'Bregan B.V.'});
+    ensureMeta('meta[name="twitter:card"]',{name:'twitter:card',content:'summary_large_image'});
+    ensureMeta('meta[name="twitter:title"]',{name:'twitter:title',content:title});
+    ensureMeta('meta[name="twitter:description"]',{name:'twitter:description',content:description});
+    ensureMeta('meta[name="twitter:image"]',{name:'twitter:image',content:logo});
+    if(file==='index.html'&&!document.getElementById('breganStructuredData')){
+      const ld=document.createElement('script');ld.type='application/ld+json';ld.id='breganStructuredData';
+      ld.textContent=JSON.stringify({
+        '@context':'https://schema.org','@type':'Organization',
+        name:'Bregan B.V.',url:'https://www.bregan.nl/',email:'info@bregan.nl',
+        address:{'@type':'PostalAddress',streetAddress:'Smederijstraat 2',postalCode:'4814 DB',addressLocality:'Breda',addressCountry:'NL'},
+        description:descriptions['index.html']
+      });
+      document.head.appendChild(ld);
+    }
+  }
+
   function setupMotion(){const obs=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting)x.target.classList.add('in-view')}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));const h=document.getElementById('siteHeader');addEventListener('scroll',()=>{h?.classList.toggle('scrolled',scrollY>20);const max=document.documentElement.scrollHeight-innerHeight,b=document.getElementById('scrollProgress');if(b)b.style.width=`${max?(scrollY/max)*100:0}%`},{passive:true})}
 
   function bagAsset(p){
@@ -81,7 +152,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  function init(){injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  function init(){injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
