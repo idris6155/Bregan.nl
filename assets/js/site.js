@@ -91,7 +91,7 @@
     const title=document.title;
     const logo=baseUrl+'assets/images/bregan-logo.webp?v=4';
     ensureMeta('meta[name="description"]',{name:'description',content:description});
-    ensureMeta('meta[name="robots"]',{name:'robots',content:'index,follow,max-image-preview:large'});
+    ensureMeta('meta[name="robots"]',{name:'robots',content:file==='404.html'?'noindex,follow':'index,follow,max-image-preview:large'});
     ensureMeta('meta[property="og:title"]',{property:'og:title',content:title});
     ensureMeta('meta[property="og:description"]',{property:'og:description',content:description});
     ensureMeta('meta[property="og:type"]',{property:'og:type',content:file==='product.html'?'product':'website'});
