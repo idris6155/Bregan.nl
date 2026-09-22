@@ -218,8 +218,39 @@
     el.innerHTML='<div class="container world-story-grid"><div class="world-map-card reveal"><span class="route-line route-a"></span><span class="route-line route-b"></span><span class="route-line route-c"></span><i class="map-node breda"></i><i class="map-node africa"></i><i class="map-node middle"></i><i class="map-node asia"></i><div class="map-caption"><small>'+c('Commercial base','Kommerzielle Basis')+'</small><strong>Breda → World</strong></div></div><div class="world-story-copy reveal"><span class="experience-kicker">'+c('Built to connect','Gebaut zum Verbinden')+'</span><h2>'+c('A Dutch base with an international operating rhythm.','Eine niederländische Basis mit internationalem Arbeitsrhythmus.')+'</h2><p>'+c('Bregan links producers, technical expertise and end-users. That means the commercial conversation, product choice, documentation and shipment route can be handled as one connected workflow.','Bregan verbindet Produzenten, technisches Know-how und Endanwender. So können kommerzielle Abstimmung, Produktauswahl, Dokumentation und Transportweg als zusammenhängender Workflow behandelt werden.')+'</p><div class="world-facts"><div class="world-fact"><strong>Breda</strong><span>'+c('The Netherlands','Niederlande')+'</span></div><div class="world-fact"><strong>Europe → Asia</strong><span>'+c('International market reach','Internationale Marktreichweite')+'</span></div><div class="world-fact"><strong>Road · Sea · Air</strong><span>'+c('Flexible logistics routes','Flexible Logistikwege')+'</span></div><div class="world-fact"><strong>Feed to fork</strong><span>'+c('Quality & traceability mindset','Qualitäts- & Rückverfolgbarkeitsansatz')+'</span></div></div></div></div>';
     quality.parentNode.insertBefore(el,quality);
   }
+  function addPortfolioSnapshot(){
+    if(page!=='products'||document.querySelector('.portfolio-snapshot'))return;
+    const products=window.BREGAN_PRODUCTS||[];
+    const speciesCount=new Set(products.flatMap(p=>p.species||[])).size;
+    const challengeCount=new Set(products.flatMap(p=>p.solutions||[])).size;
+    const hero=document.querySelector('.page-hero');
+    if(!hero)return;
+    const el=document.createElement('section');
+    el.className='portfolio-snapshot';
+    el.innerHTML='<div class="container portfolio-snapshot-grid"><div class="portfolio-snapshot-copy"><span class="experience-kicker">'+c('Portfolio at a glance','Portfolio im Überblick')+'</span><h2>'+c('One portfolio. Multiple ways in.','Ein Portfolio. Mehrere Einstiege.')+'</h2><p>'+c('Browse by product type, animal species or production challenge without losing the commercial context.','Durchsuchen Sie nach Produkttyp, Tierart oder Produktionsherausforderung, ohne den kommerziellen Kontext zu verlieren.')+'</p></div>'+
+      '<div class="portfolio-stat"><strong>'+products.length+'</strong><span>'+c('mapped products','zugeordnete Produkte')+'</span></div>'+
+      '<div class="portfolio-stat"><strong>'+speciesCount+'</strong><span>'+c('species routes','Tierarten-Routen')+'</span></div>'+
+      '<div class="portfolio-stat"><strong>'+challengeCount+'</strong><span>'+c('challenge filters','Challenge-Filter')+'</span></div></div>';
+    hero.insertAdjacentElement('afterend',el);
+  }
+
+  function addContactRoutes(){
+    if(page!=='contact'||document.querySelector('.contact-route-band'))return;
+    const contactSection=document.querySelector('main .section');
+    if(!contactSection)return;
+    const el=document.createElement('section');
+    el.className='contact-route-band';
+    const card=(n,title,body)=>'<article class="contact-route-card"><span>'+n+'</span><h3>'+title+'</h3><p>'+body+'</p></article>';
+    el.innerHTML='<div class="container"><div class="contact-route-head"><span class="experience-kicker">'+c('Route your inquiry','Anfrage richtig zuordnen')+'</span><h2>'+c('Start with the type of support you need.','Beginnen Sie mit der Art der Unterstützung, die Sie benötigen.')+'</h2><p>'+c('A clearer request helps the Bregan team connect product, documentation and commercial follow-up faster.','Eine klarere Anfrage hilft dem Bregan-Team, Produkt, Dokumentation und kommerzielle Betreuung schneller zu verbinden.')+'</p></div><div class="contact-route-grid">'+
+      card('01',c('Technical & formulation','Technik & Formulierung'),c('Product fit, specification, inclusion route and application questions.','Produkteignung, Spezifikation, Einsatzrate und Anwendungsfragen.'))+
+      card('02',c('Commercial & quotation','Kommerziell & Angebot'),c('Pricing, target market, volume and quotation requests.','Preis, Zielmarkt, Volumen und Angebotsanfragen.'))+
+      card('03',c('Logistics & documents','Logistik & Dokumente'),c('Packaging, export documentation and shipment coordination.','Verpackung, Exportdokumentation und Versandkoordination.'))+
+      '</div></div>';
+    contactSection.insertAdjacentElement('afterend',el);
+  }
+
   function init(){
-    addProductQuickNav();addChallengeLab();addWorldStory();
+    addProductQuickNav();addPortfolioSnapshot();addChallengeLab();addWorldStory();addContactRoutes();
     setTimeout(()=>document.querySelectorAll('.challenge-lab .reveal,.world-story .reveal').forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*.95)el.classList.add('in-view')}),60);
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
