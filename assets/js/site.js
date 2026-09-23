@@ -1,6 +1,31 @@
 (() => {
-  const T = window.BREGAN_TRANSLATIONS;
-  const PRODUCTS = window.BREGAN_PRODUCTS || [];
+  let T = window.BREGAN_TRANSLATIONS || {en:{},de:{}};
+  let PRODUCTS = window.BREGAN_PRODUCTS || [];
+  const CMS_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
+  const CMS_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
+
+  async function hydrateCms(){
+    try{
+      const headers={apikey:CMS_KEY,Authorization:'Bearer '+CMS_KEY};
+      const [pr,cr]=await Promise.all([
+        fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
+        fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers})
+      ]);
+      if(pr.ok){
+        const rows=await pr.json();
+        if(Array.isArray(rows)&&rows.length){
+          PRODUCTS=rows.map(p=>({...p,image:p.image_url||p.image||null}));
+          window.BREGAN_PRODUCTS=PRODUCTS;
+        }
+      }
+      if(cr.ok){
+        const rows=await cr.json();
+        const merged={en:{...(T.en||{})},de:{...(T.de||{})}};
+        rows.forEach(x=>{if(x?.key&&x?.value){if(x.value.en!==undefined)merged.en[x.key]=x.value.en;if(x.value.de!==undefined)merged.de[x.key]=x.value.de}});
+        T=merged; window.BREGAN_TRANSLATIONS=T;
+      }
+    }catch(err){console.warn('Bregan CMS fallback active',err)}
+  }
   const state = { lang: new URLSearchParams(location.search).get('lang') || localStorage.getItem('breganLang') || 'en' };
   if (!['en','de'].includes(state.lang)) state.lang = 'en';
   const page = document.body.dataset.page || 'home';
@@ -41,8 +66,40 @@
 
   function showMailFallback(subject,body){let p=document.getElementById('mailFallback');if(!p){p=document.createElement('div');p.id='mailFallback';p.className='mail-fallback';document.body.appendChild(p)}p.innerHTML=`<button class="mail-close">×</button><h3>${tr('mail_ready')}</h3><p>${tr('mail_ready_text')}</p><div class="mail-to">info@bregan.nl</div><textarea readonly>${esc(subject+'\n\n'+body)}</textarea><button class="btn btn-navy" data-copy-mail>${tr('copy_message')}</button>`;p.classList.add('show');p.querySelector('.mail-close').onclick=()=>p.classList.remove('show');p.querySelector('[data-copy-mail]').onclick=async e=>{await navigator.clipboard.writeText(subject+'\n\n'+body);e.currentTarget.textContent=tr('copied')}}
 
-  function setupForms(){document.querySelectorAll('.inquiry-form').forEach(form=>{if(form.dataset.ready)return;form.dataset.ready='1';form.addEventListener('submit',e=>{e.preventDefault();const er=form.querySelector('.form-error');if(!form.checkValidity()){er.textContent=tr('form_required');form.reportValidity();return}er.textContent='';const d=Object.fromEntries(new FormData(form).entries());const subject=`Bregan website inquiry — ${d.company||d.name}${d.product?' — '+d.product:''}`;const body=['BREGAN WEBSITE INQUIRY','',`Company: ${d.company||'-'}`,`Name: ${d.name||'-'}`,`Email: ${d.email||'-'}`,`Phone: ${d.phone||'-'}`,`Your country: ${d.country||'-'}`,`Target market: ${d.targetMarket||'-'}`,`Species / segment: ${d.species||'-'}`,`Product / interest: ${d.product||'-'}`,`Estimated quantity: ${d.quantity||'-'}`,`Documents needed: ${d.documents||'-'}`,'','Message:',d.message||'-','','— Sent from the Bregan GitHub Pages website'].join('\n');showMailFallback(subject,body);setTimeout(()=>{location.href=`mailto:info@bregan.nl?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`},150)})})}
-
+  function setupForms(){
+    document.querySelectorAll('.inquiry-form').forEach(form=>{
+      if(form.dataset.ready)return;
+      form.dataset.ready='1';
+      form.addEventListener('submit',async e=>{
+        e.preventDefault();
+        const er=form.querySelector('.form-error');
+        if(!form.checkValidity()){er.textContent=tr('form_required');form.reportValidity();return}
+        er.textContent='';
+        const d=Object.fromEntries(new FormData(form).entries());
+        const payload={
+          company:d.company||null,name:d.name||'',email:d.email||'',phone:d.phone||null,country:d.country||null,
+          target_market:d.targetMarket||null,species:d.species||null,product:d.product||null,quantity:d.quantity||null,
+          documents:d.documents||null,message:d.message||'',status:'new'
+        };
+        try{
+          const r=await fetch(CMS_URL+'/rest/v1/inquiries',{
+            method:'POST',
+            headers:{apikey:CMS_KEY,Authorization:'Bearer '+CMS_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+            body:JSON.stringify(payload)
+          });
+          if(r.ok){
+            form.reset();
+            er.textContent=state.lang==='de'?'Vielen Dank. Ihre Anfrage wurde an das Bregan-Team gesendet.':'Thank you. Your inquiry has been sent to the Bregan team.';
+            er.classList.add('success');
+            return;
+          }
+        }catch(_){}
+        const subject=`Bregan website inquiry — ${d.company||d.name}${d.product?' — '+d.product:''}`;
+        const body=['BREGAN WEBSITE INQUIRY','',`Company: ${d.company||'-'}`,`Name: ${d.name||'-'}`,`Email: ${d.email||'-'}`,`Phone: ${d.phone||'-'}`,`Your country: ${d.country||'-'}`,`Target market: ${d.targetMarket||'-'}`,`Species / segment: ${d.species||'-'}`,`Product / interest: ${d.product||'-'}`,`Estimated quantity: ${d.quantity||'-'}`,`Documents needed: ${d.documents||'-'}`,'','Message:',d.message||'-'].join('\n');
+        showMailFallback(subject,body);
+      })
+    })
+  }
 
   function setupSeo(){
     const file=location.pathname.split('/').pop()||'index.html';
@@ -163,7 +220,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  function init(){injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
