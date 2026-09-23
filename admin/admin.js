@@ -46,7 +46,7 @@
     if(profile.role==='viewer'){
       document.querySelectorAll('#nav button:not([data-view="dashboard"])').forEach(b=>b.disabled=true);
     }else if(profile.role==='sales'){
-      ['siteEditor','content','settings','team'].forEach(v=>document.querySelector('#nav [data-view="'+v+'"]')?.setAttribute('disabled',''));
+      ['siteEditor','pages','navigation','history','content','settings','team'].forEach(v=>document.querySelector('#nav [data-view="'+v+'"]')?.setAttribute('disabled',''));
     }else if(profile.role==='marketing'){
       document.querySelector('#nav [data-view="team"]')?.setAttribute('disabled','');
     }
@@ -82,12 +82,15 @@
   function closeModal(){document.getElementById('modal').hidden=true;document.getElementById('modalBody').innerHTML=''}
 
   async function render(view){
-    const titles={dashboard:'Dashboard',siteEditor:'Live site editor',products:'Products',content:'All text fields',events:'Events',documents:'Documents',inquiries:'Inquiries',media:'Media library',team:'Team',settings:'Settings'};
+    const titles={dashboard:'Dashboard',siteEditor:'Live site editor',pages:'Pages & builder',navigation:'Navigation & footer',history:'Version history',products:'Products',content:'All text fields',events:'Events',documents:'Documents',inquiries:'Inquiries',media:'Media library',team:'Team',settings:'Settings'};
     viewTitle.textContent=titles[view]||view;
     panel.innerHTML='<div class="card"><div class="empty">Loading…</div></div>';
     try{
       if(view==='dashboard') return renderDashboard();
       if(view==='siteEditor') return renderSiteEditor();
+      if(view==='pages') return renderPages();
+      if(view==='navigation') return renderNavigation();
+      if(view==='history') return renderHistory();
       if(view==='products') return renderProducts();
       if(view==='content') return renderContent();
       if(view==='events') return renderEvents();
