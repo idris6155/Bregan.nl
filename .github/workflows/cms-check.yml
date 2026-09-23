@@ -1,0 +1,15 @@
+name: CMS Check
+on:
+  push:
+    branches:
+      - feature/bregan-cms-control-v2
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --check admin/admin.js
+      - run: node --check assets/js/site.js
