@@ -1,6 +1,7 @@
 (() => {
   const SUPABASE_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
   const SUPABASE_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
+  const ADMIN_URL='https://idris6155.github.io/Bregan.nl/admin/';
   const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
   const authView=document.getElementById('authView');
@@ -18,6 +19,15 @@
   const notice=(m)=>'<div class="notice">'+esc(m)+'</div>';
   const fmt=d=>d?new Date(d).toLocaleString():'—';
 
+  async function uploadAsset(file,prefix='media'){
+    if(!file)return null;
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');
+    const path=prefix+'-'+Date.now()+'-'+safeName;
+    const {error}=await db.storage.from('bregan-media').upload(path,file,{upsert:false,contentType:file.type||undefined});
+    if(error)throw error;
+    return db.storage.from('bregan-media').getPublicUrl(path).data.publicUrl;
+  }
+
   async function getProfile(){
     const {data,error}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
     if(error) throw error;
@@ -33,8 +43,13 @@
     authView.hidden=true; appView.hidden=false;
     document.getElementById('userEmail').textContent=profile.email||session.user.email;
     document.getElementById('roleBadge').textContent=profile.role.replaceAll('_',' ');
+    document.querySelectorAll('#nav button').forEach(b=>b.disabled=false);
     if(profile.role==='viewer'){
       document.querySelectorAll('#nav button:not([data-view="dashboard"])').forEach(b=>b.disabled=true);
+    }else if(profile.role==='sales'){
+      ['siteEditor','content','settings','team'].forEach(v=>document.querySelector('#nav [data-view="'+v+'"]')?.setAttribute('disabled',''));
+    }else if(profile.role==='marketing'){
+      document.querySelector('#nav [data-view="team"]')?.setAttribute('disabled','');
     }
     await render(currentView);
   }
@@ -59,11 +74,11 @@
     const f=new FormData(e.currentTarget);
     const {data,error}=await db.auth.signUp({
       email:f.get('email'),password:f.get('password'),
-      options:{data:{full_name:f.get('full_name')||''}}
+      options:{emailRedirectTo:ADMIN_URL,data:{full_name:f.get('full_name')||''}}
     });
     if(error){authMessage.textContent=error.message;return}
     if(data.session){session=data.session;await enterApp()}
-    else authMessage.textContent='Account created. Confirm the email if Supabase asks for verification, then sign in.';
+    else authMessage.textContent='Account created. Confirm the email, then return to this panel and sign in. The confirmation redirect is set to the Bregan admin panel.';
   });
 
   document.getElementById('logoutBtn').onclick=async()=>{await db.auth.signOut();location.reload()};
@@ -80,11 +95,12 @@
   function closeModal(){document.getElementById('modal').hidden=true;document.getElementById('modalBody').innerHTML=''}
 
   async function render(view){
-    const titles={dashboard:'Dashboard',products:'Products',content:'Website text',events:'Events',documents:'Documents',inquiries:'Inquiries',media:'Media library',team:'Team',settings:'Settings'};
+    const titles={dashboard:'Dashboard',siteEditor:'Live site editor',products:'Products',content:'All text fields',events:'Events',documents:'Documents',inquiries:'Inquiries',media:'Media library',team:'Team',settings:'Settings'};
     viewTitle.textContent=titles[view]||view;
     panel.innerHTML='<div class="card"><div class="empty">Loading…</div></div>';
     try{
       if(view==='dashboard') return renderDashboard();
+      if(view==='siteEditor') return renderSiteEditor();
       if(view==='products') return renderProducts();
       if(view==='content') return renderContent();
       if(view==='events') return renderEvents();
