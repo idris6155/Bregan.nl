@@ -112,6 +112,188 @@
     }catch(err){panel.innerHTML='<div class="card"><p class="danger-text">'+esc(err.message||err)+'</p></div>'}
   }
 
+
+  async function renderSiteEditor(){
+    if(!allowed('super_admin','marketing')){
+      panel.innerHTML='<div class="card">'+notice('Live Site Editor is available to Super Admin and Marketing users.')+'</div>';
+      return;
+    }
+    const pages=[
+      ['index.html','Homepage'],['products.html','Products'],['solutions.html','Solutions'],['about.html','About Bregan'],
+      ['insights.html','Insights'],['contact.html','Contact'],['poultry.html','Poultry'],['ruminants.html','Ruminants'],['aquaculture.html','Aquaculture']
+    ];
+    panel.innerHTML=
+      '<div class="card"><div class="card-head"><div><h2>Click directly on the website</h2><p class="muted">Orange outlines are editable text. Blue buttons change images. Green buttons open product details.</p></div></div>'+
+      '<div class="editor-toolbar"><label>Page<select id="editorPage">'+pages.map(p=>'<option value="'+p[0]+'">'+p[1]+'</option>').join('')+'</select></label>'+
+      '<label>Language<select id="editorLang"><option value="en">English</option><option value="de">Deutsch</option></select></label>'+
+      '<button class="btn secondary" id="reloadPreview">Reload preview</button><span id="editorStatus" class="inline-status"></span></div>'+
+      '<div class="live-editor-shell"><iframe id="liveEditorFrame" class="live-editor-frame" title="Bregan live website editor"></iframe></div>'+
+      '<div class="editor-guide"><span class="text">Click text → edit</span><span class="image">Edit image → upload file</span><span class="product">Edit product → full product editor</span></div></div>';
+
+    const frame=document.getElementById('liveEditorFrame');
+    const pageSelect=document.getElementById('editorPage');
+    const langSelect=document.getElementById('editorLang');
+    const status=document.getElementById('editorStatus');
+
+    function loadPreview(){
+      status.textContent='Loading…';
+      frame.src='../'+pageSelect.value+'?lang='+langSelect.value+'&cms_preview=1&v='+Date.now();
+    }
+
+    function cssPath(el,doc){
+      if(el.id) return '#'+CSS.escape(el.id);
+      const parts=[];
+      let cur=el;
+      while(cur&&cur!==doc.body){
+        let part=cur.tagName.toLowerCase();
+        const parent=cur.parentElement;
+        if(parent){
+          const same=[...parent.children].filter(x=>x.tagName===cur.tagName);
+          if(same.length>1) part+=':nth-of-type('+(same.indexOf(cur)+1)+')';
+        }
+        parts.unshift(part);
+        cur=parent;
+      }
+      return parts.join(' > ');
+    }
+
+    async function editI18n(key,el){
+      const {data,error}=await db.from('content_entries').select('*').eq('key',key).maybeSingle();
+      if(error){alert(error.message);return}
+      const value=data?.value||{en:el.textContent.trim(),de:''};
+      openModal('<h2>Edit website text</h2><p class="muted">This text is reused anywhere the same content field appears.</p>'+
+        '<form id="liveI18nForm" class="stack"><label>English<textarea name="en" rows="5">'+esc(value.en||'')+'</textarea></label>'+
+        '<label>Deutsch<textarea name="de" rows="5">'+esc(value.de||'')+'</textarea></label>'+
+        '<button class="btn primary">Save & update preview</button></form>');
+      document.getElementById('liveI18nForm').onsubmit=async e=>{
+        e.preventDefault();const ff=new FormData(e.currentTarget);
+        const payload={key,section:data?.section||'live_editor',label:data?.label||key,value:{en:ff.get('en'),de:ff.get('de')},status:'published',updated_by:session.user.id,updated_at:new Date().toISOString()};
+        const {error}=await db.from('content_entries').upsert(payload);
+        if(error){alert(error.message);return}
+        closeModal();loadPreview();
+      };
+    }
+
+    async function editDirectText(el){
+      const page=pageSelect.value,lang=langSelect.value,selector=cssPath(el,frame.contentDocument);
+      const {data,error}=await db.from('page_overrides').select('*').eq('page',page).eq('selector',selector).eq('lang',lang).eq('kind','text').maybeSingle();
+      if(error){alert(error.message);return}
+      const current=data?.value??el.textContent.trim();
+      openModal('<h2>Edit this text</h2><p class="muted">'+esc(pages.find(p=>p[0]===page)?.[1]||page)+' · '+(lang==='de'?'Deutsch':'English')+'</p>'+
+        '<form id="directTextForm" class="stack"><label>Text<textarea name="value" rows="6">'+esc(current)+'</textarea></label>'+
+        '<button class="btn primary">Save & update preview</button></form>');
+      document.getElementById('directTextForm').onsubmit=async e=>{
+        e.preventDefault();const value=new FormData(e.currentTarget).get('value');
+        const payload={page,selector,lang,kind:'text',value,status:'published',updated_by:session.user.id,updated_at:new Date().toISOString()};
+        const {error}=await db.from('page_overrides').upsert(payload,{onConflict:'page,selector,lang,kind'});
+        if(error){alert(error.message);return}
+        closeModal();loadPreview();
+      };
+    }
+
+    async function editVisual(key,label){
+      const {data,error}=await db.from('site_settings').select('value').eq('key','visuals').maybeSingle();
+      if(error){alert(error.message);return}
+      const visuals=data?.value||{};
+      const current=visuals[key]||'';
+      openModal('<h2>'+esc(label)+'</h2><p class="muted">Choose an image file. No URL or code is required.</p>'+
+        '<form id="visualUploadForm" class="stack">'+(current?'<img class="image-preview" src="'+esc(current)+'" alt="">':'')+
+        '<label class="upload-field">Choose image<input type="file" name="file" accept="image/*" required></label>'+
+        '<button class="btn primary">Upload & publish</button></form>');
+      document.getElementById('visualUploadForm').onsubmit=async e=>{
+        e.preventDefault();const file=new FormData(e.currentTarget).get('file');
+        try{
+          const url=await uploadAsset(file,'visual-'+key);
+          const next={...visuals,[key]:url};
+          const {error}=await db.from('site_settings').upsert({key:'visuals',value:next,updated_by:session.user.id,updated_at:new Date().toISOString()});
+          if(error)throw error;
+          closeModal();loadPreview();
+        }catch(err){alert(err.message||err)}
+      };
+    }
+
+    async function editProductById(id){
+      const {data,error}=await db.from('products').select('*').eq('id',id).maybeSingle();
+      if(error||!data){alert(error?.message||'Product not found');return}
+      bindProductModal(data);
+    }
+
+    function wirePreview(){
+      const doc=frame.contentDocument;
+      if(!doc){status.textContent='Preview unavailable';return}
+      if(doc.getElementById('breganCmsLiveStyle'))return;
+      const style=doc.createElement('style');
+      style.id='breganCmsLiveStyle';
+      style.textContent=
+        '[data-cms-live-text]{outline:1px dashed transparent!important;outline-offset:3px;cursor:pointer!important}'+
+        '[data-cms-live-text]:hover{outline-color:#f47c20!important;background:rgba(244,124,32,.08)!important}'+
+        '.cms-live-action{position:absolute!important;z-index:99999!important;top:10px!important;right:10px!important;border:0!important;border-radius:999px!important;padding:8px 11px!important;font:700 11px/1 Arial,sans-serif!important;box-shadow:0 6px 20px rgba(0,0,0,.2)!important;cursor:pointer!important}'+
+        '.cms-live-image-action{background:#1d6f9e!important;color:#fff!important}'+
+        '.cms-live-product-action{background:#26744a!important;color:#fff!important}';
+      doc.head.appendChild(style);
+
+      const imageTargets=[
+        ['.hero','hero','Homepage hero image'],
+        ['.page-hero','page_hero','Page hero image'],
+        ['.species-card.poultry','poultry','Poultry image'],
+        ['.species-card.ruminant','ruminant','Ruminant image'],
+        ['.species-card.aqua','aqua','Aquaculture image'],
+        ['.species-card.feedmills','feedmills','Feed mill image'],
+        ['.journey-photo','journey','Journey image'],
+        ['.story-art','story_factory','Company / factory image'],
+        ['.explore-tile:nth-child(1)','explore_1','Explore image 1'],
+        ['.explore-tile:nth-child(2)','explore_2','Explore image 2'],
+        ['.explore-tile:nth-child(3)','explore_3','Explore image 3'],
+        ['.species-hero.poultry','poultry','Poultry hero image'],
+        ['.species-hero.ruminant','ruminant','Ruminant hero image'],
+        ['.species-hero.aqua','aqua','Aquaculture hero image']
+      ];
+      imageTargets.forEach(([selector,key,label])=>{
+        doc.querySelectorAll(selector).forEach(el=>{
+          if(el.querySelector(':scope > .cms-live-image-action'))return;
+          if(frame.contentWindow.getComputedStyle(el).position==='static')el.style.position='relative';
+          const b=doc.createElement('button');b.type='button';b.className='cms-live-action cms-live-image-action';b.textContent='Edit image';
+          b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editVisual(key,label)});
+          el.appendChild(b);
+        });
+      });
+
+      doc.querySelectorAll('.product-card,.related-product-card').forEach(card=>{
+        const a=card.querySelector('a[href*="product.html?id="]')||card.closest('a[href*="product.html?id="]');
+        if(!a)return;
+        const id=new URL(a.href,frame.src).searchParams.get('id');if(!id)return;
+        if(frame.contentWindow.getComputedStyle(card).position==='static')card.style.position='relative';
+        if(card.querySelector(':scope > .cms-live-product-action'))return;
+        const b=doc.createElement('button');b.type='button';b.className='cms-live-action cms-live-product-action';b.textContent='Edit product';
+        b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editProductById(id)});
+        card.appendChild(b);
+      });
+
+      doc.querySelectorAll('[data-i18n]').forEach(el=>{
+        if(el.closest('.product-card,.related-product-card'))return;
+        el.dataset.cmsLiveText='1';
+        el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editI18n(el.dataset.i18n,el)});
+      });
+
+      doc.querySelectorAll('h1,h2,h3,h4,p,span,a,button,small,strong,li,label').forEach(el=>{
+        if(el.dataset.i18n||el.dataset.cmsLiveText)return;
+        if(el.closest('.product-card,.related-product-card,.cms-live-action,.modal,.mail-fallback'))return;
+        if(el.children.length>0)return;
+        const t=el.textContent.trim();
+        if(!t||t.length>1200)return;
+        el.dataset.cmsLiveText='1';
+        el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editDirectText(el)});
+      });
+      status.textContent='Ready — click any highlighted item';
+    }
+
+    frame.addEventListener('load',()=>{status.textContent='Preparing editor…';setTimeout(wirePreview,1000)});
+    pageSelect.onchange=loadPreview;
+    langSelect.onchange=loadPreview;
+    document.getElementById('reloadPreview').onclick=loadPreview;
+    loadPreview();
+  }
+
   async function renderDashboard(){
     const [p,c,e,i,d]=await Promise.all([
       db.from('products').select('id,status',{count:'exact',head:true}),
