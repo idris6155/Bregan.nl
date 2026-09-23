@@ -347,17 +347,33 @@
   }
 
   async function renderContent(){
-    const {data,error}=await db.from('content_entries').select('*').order('key'); if(error)throw error;
-    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Website text</h2><p class="muted">Edit the EN and DE values used throughout the public site.</p></div></div><div class="table-wrap"><table><thead><tr><th>Key</th><th>English</th><th>Deutsch</th><th>Status</th><th></th></tr></thead><tbody>'+
-      data.map(x=>'<tr><td><strong>'+esc(x.label||x.key)+'</strong><br><small>'+esc(x.key)+'</small></td><td>'+esc(txt(x.value,'en')).slice(0,120)+'</td><td>'+esc(txt(x.value,'de')).slice(0,120)+'</td><td><span class="pill '+esc(x.status)+'">'+esc(x.status)+'</span></td><td><button class="icon-btn" data-edit-content="'+esc(x.key)+'">Edit</button></td></tr>').join('')+
-      '</tbody></table></div></div>';
+    if(!allowed('super_admin','marketing')){panel.innerHTML='<div class="card">'+notice('Text editing is available to Super Admin and Marketing users.')+'</div>';return}
+    const [{data,error},{data:overrides,error:overrideError}]=await Promise.all([
+      db.from('content_entries').select('*').order('key'),
+      db.from('page_overrides').select('*').order('page').order('updated_at',{ascending:false})
+    ]);
+    if(error)throw error;if(overrideError)throw overrideError;
+    panel.innerHTML=
+      '<div class="card"><div class="card-head"><div><h2>Shared website text</h2><p class="muted">These fields are used in one or more places. The Live Site Editor is the easiest way to find them visually.</p></div></div><div class="table-wrap"><table><thead><tr><th>Field</th><th>English</th><th>Deutsch</th><th></th></tr></thead><tbody>'+
+      (data||[]).map(x=>'<tr><td><strong>'+esc(x.label||x.key)+'</strong></td><td>'+esc(txt(x.value,'en')).slice(0,120)+'</td><td>'+esc(txt(x.value,'de')).slice(0,120)+'</td><td><button class="icon-btn" data-edit-content="'+esc(x.key)+'">Edit</button></td></tr>').join('')+
+      '</tbody></table></div></div>'+
+      '<div class="card"><div class="card-head"><div><h2>Page-specific text changes</h2><p class="muted">These are texts you clicked directly in Live Site Editor.</p></div></div>'+
+      ((overrides||[]).length?'<div class="table-wrap"><table><thead><tr><th>Page</th><th>Language</th><th>Text</th><th></th></tr></thead><tbody>'+
+        overrides.map(x=>'<tr><td><strong>'+esc(x.page.replace('.html',''))+'</strong></td><td>'+esc(x.lang.toUpperCase())+'</td><td>'+esc(x.value).slice(0,180)+'</td><td><div class="row-actions"><button class="icon-btn" data-edit-override="'+x.id+'">Edit</button><button class="icon-btn" data-delete-override="'+x.id+'">Delete</button></div></td></tr>').join('')+
+        '</tbody></table></div>':'<div class="empty">No page-specific text changes yet.</div>')+'</div>';
+
     panel.querySelectorAll('[data-edit-content]').forEach(b=>b.onclick=()=>{
       const x=data.find(y=>y.key===b.dataset.editContent);
-      openModal('<h2>Edit website text</h2><form id="contentForm" class="stack"><label>Key<input value="'+esc(x.key)+'" disabled></label><label>English<textarea name="en" rows="5">'+esc(txt(x.value,'en'))+'</textarea></label><label>Deutsch<textarea name="de" rows="5">'+esc(txt(x.value,'de'))+'</textarea></label><label>Status<select name="status"><option '+(x.status==='published'?'selected':'')+'>published</option><option '+(x.status==='draft'?'selected':'')+'>draft</option></select></label><button class="btn primary">Save</button></form>');
-      document.getElementById('contentForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const {error}=await db.from('content_entries').update({value:{en:f.get('en'),de:f.get('de')},status:f.get('status'),updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('key',x.key);if(error)alert(error.message);else{closeModal();renderContent()}};
+      openModal('<h2>Edit website text</h2><form id="contentForm" class="stack"><label>English<textarea name="en" rows="5">'+esc(txt(x.value,'en'))+'</textarea></label><label>Deutsch<textarea name="de" rows="5">'+esc(txt(x.value,'de'))+'</textarea></label><button class="btn primary">Save & publish</button></form>');
+      document.getElementById('contentForm').onsubmit=async e=>{e.preventDefault();const ff=new FormData(e.currentTarget);const {error}=await db.from('content_entries').update({value:{en:ff.get('en'),de:ff.get('de')},status:'published',updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('key',x.key);if(error)alert(error.message);else{closeModal();renderContent()}};
     });
+    panel.querySelectorAll('[data-edit-override]').forEach(b=>b.onclick=()=>{
+      const x=overrides.find(y=>String(y.id)===b.dataset.editOverride);
+      openModal('<h2>Edit page text</h2><p class="muted">'+esc(x.page)+' · '+esc(x.lang.toUpperCase())+'</p><form id="overrideForm" class="stack"><label>Text<textarea name="value" rows="6">'+esc(x.value)+'</textarea></label><button class="btn primary">Save & publish</button></form>');
+      document.getElementById('overrideForm').onsubmit=async e=>{e.preventDefault();const value=new FormData(e.currentTarget).get('value');const {error}=await db.from('page_overrides').update({value,status:'published',updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('id',x.id);if(error)alert(error.message);else{closeModal();renderContent()}};
+    });
+    panel.querySelectorAll('[data-delete-override]').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this page-specific text change? The original website text will return.'))return;const {error}=await db.from('page_overrides').delete().eq('id',b.dataset.deleteOverride);if(error)alert(error.message);else renderContent()});
   }
-
   async function renderEvents(){
     const {data,error}=await db.from('events').select('*').order('starts_on',{ascending:false}); if(error)throw error;
     panel.innerHTML='<div class="card"><div class="card-head"><h2>Fairs & events</h2><button id="newEvent" class="btn primary">+ Add event</button></div>'+(data.length?'<div class="table-wrap"><table><thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Status</th><th></th></tr></thead><tbody>'+data.map(x=>'<tr><td><strong>'+esc(txt(x.title,'en'))+'</strong></td><td>'+esc(x.starts_on||'—')+'</td><td>'+esc([x.venue,x.location,x.country].filter(Boolean).join(' · '))+'</td><td><span class="pill '+esc(x.status)+'">'+esc(x.status)+'</span></td><td><button class="icon-btn" data-edit-event="'+x.id+'">Edit</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No events yet.</div>')+'</div>';
