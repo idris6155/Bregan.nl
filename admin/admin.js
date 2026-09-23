@@ -1,7 +1,6 @@
 (() => {
   const SUPABASE_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
   const SUPABASE_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
-  const ADMIN_URL='https://idris6155.github.io/Bregan.nl/admin/';
   const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
   const authView=document.getElementById('authView');
