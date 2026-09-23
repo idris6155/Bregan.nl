@@ -261,7 +261,10 @@
       'aquaculture.html':state.lang==='de'?'Bregan Premixe und funktionelle Futterzusätze für moderne Aquakultur und Aquafutter.':'Bregan premixes and functional feed additives for modern aquaculture and aquafeed.',
       'privacy.html':state.lang==='de'?'Datenschutzhinweise für die Bregan B.V. Website.':'Privacy information for the Bregan B.V. website.'
     };
-    let description=descriptions[file]||document.querySelector('meta[name="description"]')?.content||'Bregan B.V.';
+    const cmsSeo=CMS_PAGE?.published_seo||{};
+    const cmsSeoLang=cmsSeo[state.lang]||cmsSeo.en||{};
+    if(cmsSeoLang.title)document.title=cmsSeoLang.title;
+    let description=cmsSeoLang.description||descriptions[file]||document.querySelector('meta[name="description"]')?.content||'Bregan B.V.';
     if(file==='product.html'){
       description=document.querySelector('.detail-copy .lead')?.textContent?.trim()||description;
     }
@@ -277,6 +280,10 @@
       const id=new URLSearchParams(location.search).get('id');
       if(id)canonicalParams.set('id',id);
     }
+    if(file==='page.html'){
+      const slug=CMS_PAGE?.slug||new URLSearchParams(location.search).get('slug');
+      if(slug)canonicalParams.set('slug',slug);
+    }
     const canonical=baseUrl+file+'?'+canonicalParams.toString();
     let link=document.head.querySelector('link[rel="canonical"]');
     if(!link){link=document.createElement('link');link.rel='canonical';document.head.appendChild(link);}
@@ -290,7 +297,7 @@
     if(!xd){xd=document.createElement('link');xd.rel='alternate';xd.hreflang='x-default';document.head.appendChild(xd);}
     const xq=new URLSearchParams(canonicalParams);xq.set('lang','en');xd.href=baseUrl+file+'?'+xq.toString();
     const title=document.title;
-    const logo=baseUrl+'assets/images/bregan-logo.webp?v=4';
+    const logo=cmsSeo.og_image_url||SETTINGS.visuals?.logo||baseUrl+'assets/images/bregan-logo.webp?v=4';
     ensureMeta('meta[name="description"]',{name:'description',content:description});
     ensureMeta('meta[name="robots"]',{name:'robots',content:file==='404.html'?'noindex,follow':'index,follow,max-image-preview:large'});
     ensureMeta('meta[property="og:title"]',{property:'og:title',content:title});
@@ -364,7 +371,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();applyPageOverrides();setupOverrideObserver();setTimeout(applyPageOverrides,350);setTimeout(applyPageOverrides,1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();renderCmsCustomPage();applyCmsPageLayout();setupSeo();setupForms();setupMotion();applyPageOverrides();setupOverrideObserver();setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},350);setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
