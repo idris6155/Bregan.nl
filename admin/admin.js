@@ -69,18 +69,6 @@
     await enterApp();
   });
 
-  document.getElementById('signupForm').addEventListener('submit',async e=>{
-    e.preventDefault(); authMessage.textContent='Creating account…';
-    const f=new FormData(e.currentTarget);
-    const {data,error}=await db.auth.signUp({
-      email:f.get('email'),password:f.get('password'),
-      options:{emailRedirectTo:ADMIN_URL,data:{full_name:f.get('full_name')||''}}
-    });
-    if(error){authMessage.textContent=error.message;return}
-    if(data.session){session=data.session;await enterApp()}
-    else authMessage.textContent='Account created. Confirm the email, then return to this panel and sign in. The confirmation redirect is set to the Bregan admin panel.';
-  });
-
   document.getElementById('logoutBtn').onclick=async()=>{await db.auth.signOut();location.reload()};
   document.getElementById('refreshBtn').onclick=()=>render(currentView);
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=async()=>{
@@ -412,12 +400,35 @@
     panel.querySelectorAll('[data-delete-media]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this media file? Existing pages using it may lose the image.'))return;const {error}=await db.storage.from('bregan-media').remove([b.dataset.deleteMedia]);if(error)alert(error.message);else renderMedia()});
   }
   async function renderTeam(){
-    if(!allowed('super_admin')){panel.innerHTML='<div class="card">'+notice('Only Super Admin can manage team roles.')+'</div>';return}
+    if(!allowed('super_admin')){panel.innerHTML='<div class="card">'+notice('Only Super Admin can manage team access.')+'</div>';return}
     const {data,error}=await db.from('profiles').select('*').order('created_at'); if(error)throw error;
-    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Team access</h2><p class="muted">New users can create an account on the CMS login page. They start as Viewer; approve their role here.</p></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Active</th><th></th></tr></thead><tbody>'+data.map(x=>'<tr><td><strong>'+esc(x.full_name||'Unnamed')+'</strong><br>'+esc(x.email||x.id)+'</td><td><select data-role="'+x.id+'"><option '+(x.role==='viewer'?'selected':'')+'>viewer</option><option '+(x.role==='sales'?'selected':'')+'>sales</option><option '+(x.role==='marketing'?'selected':'')+'>marketing</option><option '+(x.role==='super_admin'?'selected':'')+'>super_admin</option></select></td><td><input type="checkbox" data-active="'+x.id+'" '+(x.active?'checked':'')+'></td><td><button class="icon-btn" data-save-user="'+x.id+'">Save</button></td></tr>').join('')+'</tbody></table></div></div>';
-    panel.querySelectorAll('[data-save-user]').forEach(b=>b.onclick=async()=>{const id=b.dataset.saveUser;const role=panel.querySelector('[data-role="'+id+'"]').value;const active=panel.querySelector('[data-active="'+id+'"]').checked;const {error}=await db.from('profiles').update({role,active,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else b.textContent='Saved'});
-  }
+    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Team access</h2><p class="muted">Create staff accounts here. They are confirmed immediately and can sign in directly — no email confirmation or localhost redirect.</p></div><button id="addTeamUser" class="btn primary">+ Add user</button></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Active</th><th></th></tr></thead><tbody>'+
+      data.map(x=>'<tr><td><strong>'+esc(x.full_name||'Unnamed')+'</strong><br>'+esc(x.email||x.id)+'</td><td><select data-role="'+x.id+'"><option '+(x.role==='viewer'?'selected':'')+'>viewer</option><option '+(x.role==='sales'?'selected':'')+'>sales</option><option '+(x.role==='marketing'?'selected':'')+'>marketing</option><option '+(x.role==='super_admin'?'selected':'')+'>super_admin</option></select></td><td><input type="checkbox" data-active="'+x.id+'" '+(x.active?'checked':'')+'></td><td><button class="icon-btn" data-save-user="'+x.id+'">Save</button></td></tr>').join('')+
+      '</tbody></table></div></div>';
 
+    document.getElementById('addTeamUser').onclick=()=>{
+      openModal('<h2>Add staff user</h2><p class="muted">Create the account with a temporary password. The user can sign in immediately.</p>'+
+        '<form id="addTeamUserForm" class="stack"><label>Full name<input name="full_name" required></label><label>Email<input name="email" type="email" required></label>'+
+        '<label>Temporary password<input name="password" type="password" minlength="8" required></label>'+
+        '<label>Role<select name="role"><option value="viewer">Viewer</option><option value="sales">Sales</option><option value="marketing">Marketing</option><option value="super_admin">Super Admin</option></select></label>'+
+        '<button class="btn primary">Create user</button></form>');
+      document.getElementById('addTeamUserForm').onsubmit=async e=>{
+        e.preventDefault();const ff=new FormData(e.currentTarget);e.submitter.disabled=true;e.submitter.textContent='Creating…';
+        const {data,error}=await db.functions.invoke('create-cms-user',{body:{full_name:ff.get('full_name'),email:ff.get('email'),password:ff.get('password'),role:ff.get('role')}});
+        if(error){alert(error.message);e.submitter.disabled=false;e.submitter.textContent='Create user';return}
+        if(data?.error){alert(data.error);e.submitter.disabled=false;e.submitter.textContent='Create user';return}
+        closeModal();await renderTeam();
+      };
+    };
+
+    panel.querySelectorAll('[data-save-user]').forEach(b=>b.onclick=async()=>{
+      const id=b.dataset.saveUser;
+      const role=panel.querySelector('[data-role="'+id+'"]').value;
+      const active=panel.querySelector('[data-active="'+id+'"]').checked;
+      const {error}=await db.from('profiles').update({role,active,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error)alert(error.message);else b.textContent='Saved';
+    });
+  }
   async function renderSettings(){
     if(!allowed('super_admin','marketing')){
       panel.innerHTML='<div class="card">'+notice('Settings are available to Super Admin and Marketing users.')+'</div>';
