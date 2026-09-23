@@ -1,16 +1,20 @@
 (() => {
   let T = window.BREGAN_TRANSLATIONS || {en:{},de:{}};
   let PRODUCTS = window.BREGAN_PRODUCTS || [];
+  let PAGE_OVERRIDES = [];
   const CMS_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
   const CMS_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
 
   async function hydrateCms(){
     try{
       const headers={apikey:CMS_KEY};
-      const [pr,cr,sr]=await Promise.all([
+      const cmsLang=new URLSearchParams(location.search).get('lang')||localStorage.getItem('breganLang')||'en';
+      const cmsPage=location.pathname.split('/').pop()||'index.html';
+      const [pr,cr,sr,orr]=await Promise.all([
         fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
         fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers}),
-        fetch(CMS_URL+'/rest/v1/site_settings?select=key,value&key=eq.visuals',{headers})
+        fetch(CMS_URL+'/rest/v1/site_settings?select=key,value&key=eq.visuals',{headers}),
+        fetch(CMS_URL+'/rest/v1/page_overrides?select=selector,lang,kind,value&status=eq.published&page=eq.'+encodeURIComponent(cmsPage)+'&or=(lang.eq.'+cmsLang+',lang.eq.all)',{headers})
       ]);
       if(pr.ok){
         const rows=await pr.json();
@@ -25,6 +29,10 @@
         rows.forEach(x=>{if(x?.key&&x?.value){if(x.value.en!==undefined)merged.en[x.key]=x.value.en;if(x.value.de!==undefined)merged.de[x.key]=x.value.de}});
         T=merged; window.BREGAN_TRANSLATIONS=T;
       }
+      if(orr.ok){
+        const rows=await orr.json();
+        PAGE_OVERRIDES=Array.isArray(rows)?rows:[];
+      }
       if(sr.ok){
         const rows=await sr.json(); const v=rows?.[0]?.value||{};
         if(Object.keys(v).length){
@@ -37,6 +45,14 @@
             .species-card.ruminant{--bg:url("${safe(v.ruminant)}")!important}
             .species-card.aqua{--bg:url("${safe(v.aqua)}")!important}
             .species-card.feedmills{--bg:url("${safe(v.feedmills)}")!important}
+            .journey-photo{background-image:url("${safe(v.journey||v.hero)}")!important}
+            .explore-tile:nth-child(1):before{background-image:url("${safe(v.explore_1||v.poultry)}")!important}
+            .explore-tile:nth-child(2):before{background-image:url("${safe(v.explore_2||v.ruminant)}")!important}
+            .explore-tile:nth-child(3):before{background-image:url("${safe(v.explore_3||v.aqua)}")!important}
+            .story-art{background-image:linear-gradient(180deg,rgba(9,34,54,.10),rgba(9,34,54,.76)),url("${safe(v.story_factory||v.feedmills)}")!important}
+            .species-hero.poultry .species-hero-photo{background-image:url("${safe(v.poultry)}")!important}
+            .species-hero.ruminant .species-hero-photo{background-image:url("${safe(v.ruminant)}")!important}
+            .species-hero.aqua .species-hero-photo{background-image:url("${safe(v.aqua)}")!important}
           `;
           document.head.appendChild(style);
         }
@@ -49,6 +65,17 @@
   const tr = key => T[state.lang]?.[key] ?? T.en[key] ?? key;
   const esc = (s='') => String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const withLang = href => { const u = new URL(href, location.href); u.searchParams.set('lang', state.lang); return u.pathname.split('/').pop() + '?' + u.searchParams.toString() + (u.hash || ''); };
+
+  function applyPageOverrides(){
+    const rows=[...PAGE_OVERRIDES].sort((a,b)=>(a.lang==='all'?0:1)-(b.lang==='all'?0:1));
+    rows.forEach(o=>{
+      if(!o?.selector||o.kind!=='text')return;
+      try{
+        const el=document.querySelector(o.selector);
+        if(el) el.textContent=o.value ?? '';
+      }catch(_){}
+    });
+  }
 
   function header(){
     const active=name=>page===name?' is-active':'';
@@ -237,7 +264,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();applyPageOverrides();setTimeout(applyPageOverrides,350);setTimeout(applyPageOverrides,1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
