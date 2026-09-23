@@ -317,7 +317,8 @@
     '<div class="grid-3"><label>Type<input name="type" value="'+esc(p.type||'')+'"></label><label>Category<input name="category" value="'+esc(p.category||'')+'"></label><label>Status<select name="status"><option '+(p.status==='published'?'selected':'')+'>published</option><option '+(p.status==='draft'?'selected':'')+'>draft</option><option '+(p.status==='archived'?'selected':'')+'>archived</option></select></label></div>'+
     '<div class="grid-2"><label>Species (comma separated)<input name="species" value="'+esc((p.species||[]).join(', '))+'"></label><label>Solutions (comma separated)<input name="solutions" value="'+esc((p.solutions||[]).join(', '))+'"></label></div>'+
     '<div class="grid-3"><label>Consistency<input name="consistency" value="'+esc(p.consistency||'')+'"></label><label>Packaging<input name="packaging" value="'+esc(p.packaging||'')+'"></label><label>Inclusion<input name="inclusion" value="'+esc(p.inclusion||'')+'"></label></div>'+
-    '<label>Image URL<input name="image_url" value="'+esc(p.image_url||'')+'"></label>'+
+    '<input type="hidden" name="current_image_url" value="'+esc(p.image_url||'')+'">'+
+    '<label class="upload-field">Product image'+(p.image_url?'<img class="image-preview" src="'+esc(p.image_url)+'" alt="">':'')+'<input type="file" name="image_file" accept="image/*"></label>'+
     '<div class="form-section"><h3>English</h3><label>Summary<textarea name="summary_en" rows="2">'+esc(txt(p.summary,'en'))+'</textarea></label><label>Description<textarea name="description_en" rows="4">'+esc(txt(p.description,'en'))+'</textarea></label><label>Benefits — one per line<textarea name="benefits_en" rows="5">'+esc(bEn)+'</textarea></label><label>Composition<textarea name="composition_en" rows="2">'+esc(txt(p.composition,'en'))+'</textarea></label></div>'+
     '<div class="form-section"><h3>Deutsch</h3><label>Summary<textarea name="summary_de" rows="2">'+esc(txt(p.summary,'de'))+'</textarea></label><label>Description<textarea name="description_de" rows="4">'+esc(txt(p.description,'de'))+'</textarea></label><label>Benefits — one per line<textarea name="benefits_de" rows="5">'+esc(bDe)+'</textarea></label><label>Composition<textarea name="composition_de" rows="2">'+esc(txt(p.composition,'de'))+'</textarea></label></div>'+
     '<label><input type="checkbox" name="featured" '+(p.featured?'checked':'')+'> Featured product</label>'+
@@ -338,10 +339,13 @@
     openModal('<h2>'+(p.id?'Edit product':'New product')+'</h2>'+productForm(p));
     document.getElementById('productForm').onsubmit=async e=>{
       e.preventDefault(); const f=new FormData(e.currentTarget);
+      let imageUrl=f.get('current_image_url')||null;
+      const imageFile=f.get('image_file');
+      if(imageFile&&imageFile.size){try{imageUrl=await uploadAsset(imageFile,'product')}catch(err){alert(err.message||err);return}}
       const payload={
         id:f.get('id').trim(),name:f.get('name').trim(),type:f.get('type'),category:f.get('category'),
         species:arr(f.get('species')),solutions:arr(f.get('solutions')),consistency:f.get('consistency'),packaging:f.get('packaging'),
-        inclusion:f.get('inclusion'),image_url:f.get('image_url')||null,status:f.get('status'),featured:f.get('featured')==='on',
+        inclusion:f.get('inclusion'),image_url:imageUrl,status:f.get('status'),featured:f.get('featured')==='on',
         summary:{en:f.get('summary_en'),de:f.get('summary_de')},description:{en:f.get('description_en'),de:f.get('description_de')},
         benefits:{en:lines(f.get('benefits_en')),de:lines(f.get('benefits_de'))},composition:{en:f.get('composition_en'),de:f.get('composition_de')},
         updated_by:session.user.id,updated_at:new Date().toISOString(),published_at:f.get('status')==='published'?new Date().toISOString():null
@@ -350,7 +354,7 @@
       let res;
       if(old&&old!==payload.id){res=await db.from('products').insert({...payload,created_by:session.user.id});if(!res.error)await db.from('products').delete().eq('id',old)}
       else res=await db.from('products').upsert({...payload,...(!old?{created_by:session.user.id}: {})});
-      if(res.error){alert(res.error.message);return} closeModal(); renderProducts();
+      if(res.error){alert(res.error.message);return} closeModal(); currentView==='siteEditor'?renderSiteEditor():renderProducts();
     };
   }
 
