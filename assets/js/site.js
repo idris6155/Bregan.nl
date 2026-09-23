@@ -6,7 +6,7 @@
 
   async function hydrateCms(){
     try{
-      const headers={apikey:CMS_KEY,Authorization:'Bearer '+CMS_KEY};
+      const headers={apikey:CMS_KEY};
       const [pr,cr]=await Promise.all([
         fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
         fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers})
@@ -84,7 +84,7 @@
         try{
           const r=await fetch(CMS_URL+'/rest/v1/inquiries',{
             method:'POST',
-            headers:{apikey:CMS_KEY,Authorization:'Bearer '+CMS_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+            headers:{apikey:CMS_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
             body:JSON.stringify(payload)
           });
           if(r.ok){
