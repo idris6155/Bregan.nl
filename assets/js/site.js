@@ -3,6 +3,8 @@
   let PRODUCTS = window.BREGAN_PRODUCTS || [];
   let PAGE_OVERRIDES = [];
   let SETTINGS = {};
+  let CMS_PAGE = null;
+  let CMS_GLOBALS = {};
   const CMS_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
   const CMS_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
 
@@ -11,11 +13,15 @@
       const headers={apikey:CMS_KEY};
       const cmsLang=new URLSearchParams(location.search).get('lang')||localStorage.getItem('breganLang')||'en';
       const cmsPage=location.pathname.split('/').pop()||'index.html';
-      const [pr,cr,sr,orr]=await Promise.all([
+      const customSlug=new URLSearchParams(location.search).get('slug')||'';
+      const pageFilter=(cmsPage==='page.html'&&customSlug)?'&slug=eq.'+encodeURIComponent(customSlug):'&source_file=eq.'+encodeURIComponent(cmsPage);
+      const [pr,cr,sr,orr,pgr,ggr]=await Promise.all([
         fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
         fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers}),
         fetch(CMS_URL+'/rest/v1/site_settings?select=key,value',{headers}),
-        fetch(CMS_URL+'/rest/v1/page_overrides?select=selector,lang,kind,value&status=eq.published&page=eq.'+encodeURIComponent(cmsPage)+'&or=(lang.eq.'+cmsLang+',lang.eq.all)',{headers})
+        fetch(CMS_URL+'/rest/v1/page_overrides?select=selector,lang,kind,value&status=eq.published&page=eq.'+encodeURIComponent(cmsPage)+'&or=(lang.eq.'+cmsLang+',lang.eq.all)',{headers}),
+        fetch(CMS_URL+'/rest/v1/cms_pages?select=slug,internal_name,page_kind,source_file,published_data,published_seo,status,version,published_at&status=eq.published'+pageFilter,{headers}),
+        fetch(CMS_URL+'/rest/v1/cms_globals?select=key,published_data,version',{headers})
       ]);
       if(pr.ok){
         const rows=await pr.json();
@@ -34,6 +40,8 @@
         const rows=await orr.json();
         PAGE_OVERRIDES=Array.isArray(rows)?rows:[];
       }
+      if(pgr.ok){const rows=await pgr.json();CMS_PAGE=Array.isArray(rows)&&rows.length?rows[0]:null;}
+      if(ggr.ok){const rows=await ggr.json();CMS_GLOBALS=Object.fromEntries((rows||[]).map(x=>[x.key,x.published_data||{}]));}
       if(sr.ok){
         const rows=await sr.json(); SETTINGS=Object.fromEntries((rows||[]).map(x=>[x.key,x.value||{}])); const v=SETTINGS.visuals||{};
         if(!new URLSearchParams(location.search).get('lang')&&!localStorage.getItem('breganLang')&&SETTINGS.languages?.default) state.lang=SETTINGS.languages.default;
@@ -68,6 +76,43 @@
   const esc = (s='') => String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const withLang = href => { const u = new URL(href, location.href); u.searchParams.set('lang', state.lang); return u.pathname.split('/').pop() + '?' + u.searchParams.toString() + (u.hash || ''); };
 
+  const cmsText=value=>value?.[state.lang]||value?.en||'';
+  function cmsHref(href){
+    const h=String(href||'').trim();
+    if(!h)return '#';
+    if(/^(https?:|mailto:|tel:|#)/i.test(h))return h;
+    return withLang(h);
+  }
+  function applyCmsPageLayout(){
+    if(!CMS_PAGE||CMS_PAGE.page_kind!=='existing')return;
+    const sections=[...(CMS_PAGE.published_data?.sections||[])].sort((a,b)=>(a.order||0)-(b.order||0));
+    const found=sections.map(s=>{try{return {s,el:document.querySelector(s.selector)}}catch(_){return null}}).filter(x=>x?.el);
+    found.forEach(x=>{x.el.style.display=x.s.visible===false?'none':''});
+    const parent=found[0]?.el?.parentElement;
+    if(!parent||found.some(x=>x.el.parentElement!==parent))return;
+    const desired=found.map(x=>x.el);
+    const current=[...parent.children].filter(el=>desired.includes(el));
+    const mismatch=current.length!==desired.length||current.some((el,i)=>el!==desired[i]);
+    if(mismatch)desired.forEach(el=>parent.appendChild(el));
+  }
+  function renderCmsCustomPage(){
+    if(page!=='custom')return;
+    const root=document.getElementById('customPage');if(!root)return;
+    if(!CMS_PAGE){
+      root.innerHTML='<section class="page-hero"><div class="container"><div class="eyebrow">BREGAN</div><h1>Page not found</h1><p>The requested page is not published.</p></div></section>';
+      return;
+    }
+    const blockHtml=block=>{
+      const eyebrow=esc(cmsText(block.eyebrow)),title=esc(cmsText(block.title)),body=esc(cmsText(block.body));
+      const button=cmsText(block.button_label);
+      if(block.type==='hero')return '<section class="cms-page-hero"'+(block.image_url?' style="background-image:linear-gradient(90deg,rgba(8,34,54,.88),rgba(8,34,54,.35)),url(\''+esc(block.image_url)+'\')"':'')+'><div class="container"><div class="eyebrow">'+eyebrow+'</div><h1>'+title+'</h1><p>'+body+'</p>'+(button?'<a class="btn btn-orange" href="'+esc(cmsHref(block.button_href))+'">'+esc(button)+'</a>':'')+'</div></section>';
+      if(block.type==='image_text')return '<section class="section cms-image-text"><div class="container cms-image-text-grid">'+(block.image_url?'<img src="'+esc(block.image_url)+'" alt="'+title+'">':'<div class="cms-image-placeholder"></div>')+'<div><div class="eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p class="lead">'+body+'</p></div></div></section>';
+      if(block.type==='cta')return '<section class="cta"><div class="container"><div class="cta-box"><div><h2>'+title+'</h2><p>'+body+'</p></div>'+(button?'<a class="btn btn-navy" href="'+esc(cmsHref(block.button_href))+'">'+esc(button)+'</a>':'')+'</div></div></section>';
+      return '<section class="section"><div class="container cms-rich-text"><div class="eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p class="lead">'+body+'</p></div></section>';
+    };
+    root.innerHTML=(CMS_PAGE.published_data?.sections||[]).map(blockHtml).join('');
+  }
+
   function applyPageOverrides(){
     const rows=[...PAGE_OVERRIDES].sort((a,b)=>(a.lang==='all'?0:1)-(b.lang==='all'?0:1));
     rows.forEach(o=>{
@@ -94,7 +139,7 @@
     let timer=0;
     const observer=new MutationObserver(()=>{
       clearTimeout(timer);
-      timer=setTimeout(applyPageOverrides,60);
+      timer=setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},60);
     });
     observer.observe(document.body,{childList:true,subtree:true});
   }
