@@ -221,8 +221,8 @@
     function wirePreview(){
       const doc=frame.contentDocument;
       if(!doc){status.textContent='Preview unavailable';return}
-      if(doc.getElementById('breganCmsLiveStyle'))return;
-      const style=doc.createElement('style');
+      let style=doc.getElementById('breganCmsLiveStyle');
+      if(!style){style=doc.createElement('style');
       style.id='breganCmsLiveStyle';
       style.textContent=
         '[data-cms-live-text]{outline:1px dashed transparent!important;outline-offset:3px;cursor:pointer!important}'+
@@ -230,7 +230,7 @@
         '.cms-live-action{position:absolute!important;z-index:99999!important;top:10px!important;right:10px!important;border:0!important;border-radius:999px!important;padding:8px 11px!important;font:700 11px/1 Arial,sans-serif!important;box-shadow:0 6px 20px rgba(0,0,0,.2)!important;cursor:pointer!important}'+
         '.cms-live-image-action{background:#1d6f9e!important;color:#fff!important}'+
         '.cms-live-product-action{background:#26744a!important;color:#fff!important}';
-      doc.head.appendChild(style);
+      doc.head.appendChild(style);}
 
       const imageTargets=[
         ['.hero','hero','Homepage hero image'],
@@ -287,7 +287,7 @@
       status.textContent='Ready — click any highlighted item';
     }
 
-    frame.addEventListener('load',()=>{status.textContent='Preparing editor…';setTimeout(wirePreview,1000)});
+    frame.addEventListener('load',()=>{status.textContent='Preparing editor…';setTimeout(wirePreview,900);setTimeout(wirePreview,2200)});
     pageSelect.onchange=loadPreview;
     langSelect.onchange=loadPreview;
     document.getElementById('reloadPreview').onclick=loadPreview;
