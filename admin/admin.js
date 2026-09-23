@@ -199,6 +199,25 @@
       };
     }
 
+    async function editInlineImage(img){
+      const page=pageSelect.value;
+      const selector=cssPath(img,frame.contentDocument);
+      openModal('<h2>Replace image</h2><p class="muted">Choose an image file. No URL is required.</p>'+
+        '<form id="inlineImageForm" class="stack"><img class="image-preview" src="'+esc(img.src)+'" alt="">'+
+        '<label class="upload-field">Choose image<input type="file" name="file" accept="image/*" required></label>'+
+        '<button class="btn primary">Upload & publish</button></form>');
+      document.getElementById('inlineImageForm').onsubmit=async e=>{
+        e.preventDefault();const file=new FormData(e.currentTarget).get('file');
+        try{
+          const url=await uploadAsset(file,'page-image');
+          const payload={page,selector,lang:'all',kind:'image_src',value:url,status:'published',updated_by:session.user.id,updated_at:new Date().toISOString()};
+          const {error}=await db.from('page_overrides').upsert(payload,{onConflict:'page,selector,lang,kind'});
+          if(error)throw error;
+          closeModal();loadPreview();
+        }catch(err){alert(err.message||err)}
+      };
+    }
+
     async function editProductById(id){
       const {data,error}=await db.from('products').select('*').eq('id',id).maybeSingle();
       if(error||!data){alert(error?.message||'Product not found');return}
@@ -215,7 +234,7 @@
         '[data-cms-live-text]{outline:1px dashed transparent!important;outline-offset:3px;cursor:pointer!important}'+
         '[data-cms-live-text]:hover{outline-color:#f47c20!important;background:rgba(244,124,32,.08)!important}'+
         '.cms-live-action{position:absolute!important;z-index:99999!important;top:10px!important;right:10px!important;border:0!important;border-radius:999px!important;padding:8px 11px!important;font:700 11px/1 Arial,sans-serif!important;box-shadow:0 6px 20px rgba(0,0,0,.2)!important;cursor:pointer!important}'+
-        '.cms-live-image-action{background:#1d6f9e!important;color:#fff!important}'+
+        '.cms-live-image-action,.cms-live-inline-image-action{background:#1d6f9e!important;color:#fff!important}'+
         '.cms-live-product-action{background:#26744a!important;color:#fff!important}';
       doc.head.appendChild(style);}
 
@@ -245,8 +264,8 @@
         });
       });
 
-      doc.querySelectorAll('.product-card,.related-product-card').forEach(card=>{
-        const a=card.querySelector('a[href*="product.html?id="]')||card.closest('a[href*="product.html?id="]');
+      doc.querySelectorAll('.product-card,.related-product-card,.species-product').forEach(card=>{
+        const a=card.matches('a[href*="product.html?id="]')?card:(card.querySelector('a[href*="product.html?id="]')||card.closest('a[href*="product.html?id="]'));
         if(!a)return;
         const id=new URL(a.href,frame.src).searchParams.get('id');if(!id)return;
         if(frame.contentWindow.getComputedStyle(card).position==='static')card.style.position='relative';
@@ -254,6 +273,23 @@
         const b=doc.createElement('button');b.type='button';b.className='cms-live-action cms-live-product-action';b.textContent='Edit product';
         b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editProductById(id)});
         card.appendChild(b);
+      });
+
+      doc.querySelectorAll('.brand-logo-image').forEach(img=>{
+        const parent=img.parentElement;if(!parent||parent.querySelector(':scope > .cms-live-logo-action'))return;
+        if(frame.contentWindow.getComputedStyle(parent).position==='static')parent.style.position='relative';
+        const b=doc.createElement('button');b.type='button';b.className='cms-live-action cms-live-image-action cms-live-logo-action';b.textContent='Edit logo';
+        b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editVisual('logo','Bregan logo')});
+        parent.appendChild(b);
+      });
+
+      doc.querySelectorAll('img:not(.brand-logo-image)').forEach(img=>{
+        if(img.closest('.product-card,.related-product-card,.species-product'))return;
+        const parent=img.parentElement;if(!parent||parent.querySelector(':scope > .cms-live-inline-image-action'))return;
+        if(frame.contentWindow.getComputedStyle(parent).position==='static')parent.style.position='relative';
+        const b=doc.createElement('button');b.type='button';b.className='cms-live-action cms-live-inline-image-action';b.textContent='Edit image';
+        b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();editInlineImage(img)});
+        parent.appendChild(b);
       });
 
       doc.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -455,7 +491,7 @@
     const brand=byKey.brand||{};
     const languages=byKey.languages||{enabled:['en','de'],default:'en'};
     const visualFields=[
-      ['hero','Homepage hero'],['page_hero','Inner page hero'],['poultry','Poultry'],['ruminant','Ruminant'],
+      ['logo','Bregan logo'],['hero','Homepage hero'],['page_hero','Inner page hero'],['poultry','Poultry'],['ruminant','Ruminant'],
       ['aqua','Aquaculture'],['feedmills','Feed mill'],['journey','Journey section'],['story_factory','Company / factory'],
       ['explore_1','Explore image 1'],['explore_2','Explore image 2'],['explore_3','Explore image 3']
     ];
