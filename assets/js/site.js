@@ -7,9 +7,10 @@
   async function hydrateCms(){
     try{
       const headers={apikey:CMS_KEY};
-      const [pr,cr]=await Promise.all([
+      const [pr,cr,sr]=await Promise.all([
         fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
-        fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers})
+        fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers}),
+        fetch(CMS_URL+'/rest/v1/site_settings?select=key,value&key=eq.visuals',{headers})
       ]);
       if(pr.ok){
         const rows=await pr.json();
@@ -23,6 +24,22 @@
         const merged={en:{...(T.en||{})},de:{...(T.de||{})}};
         rows.forEach(x=>{if(x?.key&&x?.value){if(x.value.en!==undefined)merged.en[x.key]=x.value.en;if(x.value.de!==undefined)merged.de[x.key]=x.value.de}});
         T=merged; window.BREGAN_TRANSLATIONS=T;
+      }
+      if(sr.ok){
+        const rows=await sr.json(); const v=rows?.[0]?.value||{};
+        if(Object.keys(v).length){
+          const safe=u=>String(u||'').replace(/["'()]/g,'');
+          const style=document.createElement('style');style.id='cmsVisualOverrides';
+          style.textContent=`
+            .hero-bg{background-image:url("${safe(v.hero)}")!important}
+            .page-hero:before{background-image:url("${safe(v.page_hero||v.hero)}")!important}
+            .species-card.poultry{--bg:url("${safe(v.poultry)}")!important}
+            .species-card.ruminant{--bg:url("${safe(v.ruminant)}")!important}
+            .species-card.aqua{--bg:url("${safe(v.aqua)}")!important}
+            .species-card.feedmills{--bg:url("${safe(v.feedmills)}")!important}
+          `;
+          document.head.appendChild(style);
+        }
       }
     }catch(err){console.warn('Bregan CMS fallback active',err)}
   }
