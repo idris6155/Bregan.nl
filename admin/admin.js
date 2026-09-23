@@ -404,11 +404,13 @@
 
   async function renderMedia(){
     const {data,error}=await db.storage.from('bregan-media').list('',{limit:100,sortBy:{column:'created_at',order:'desc'}}); if(error)throw error;
-    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Media library</h2><p class="muted">Images and PDFs uploaded here can be used in products, events and documents.</p></div><label class="btn primary">+ Upload<input id="mediaUpload" type="file" multiple hidden></label></div><div class="media-grid">'+(data||[]).filter(x=>x.name!=='.emptyFolderPlaceholder').map(x=>{const url=db.storage.from('bregan-media').getPublicUrl(x.name).data.publicUrl;const image=/\.(png|jpe?g|webp|gif|svg)$/i.test(x.name);return '<div class="media-item">'+(image?'<img src="'+esc(url)+'" alt="">':'<div class="empty">FILE</div>')+'<div><strong>'+esc(x.name)+'</strong><br><button class="icon-btn" data-copy-url="'+esc(url)+'">Copy URL</button></div></div>'}).join('')+'</div></div>';
-    document.getElementById('mediaUpload').onchange=async e=>{for(const file of e.target.files){const safe=Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'-');const {error}=await db.storage.from('bregan-media').upload(safe,file,{upsert:false});if(error){alert(error.message);break}}renderMedia()};
-    panel.querySelectorAll('[data-copy-url]').forEach(b=>b.onclick=async()=>{await navigator.clipboard.writeText(b.dataset.copyUrl);b.textContent='Copied'});
+    const files=(data||[]).filter(x=>x.name!=='.emptyFolderPlaceholder');
+    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Media library</h2><p class="muted">Upload images and documents here. Editors can also upload files directly while editing products, events and pages.</p></div><label class="btn primary">+ Upload<input id="mediaUpload" type="file" multiple hidden></label></div><div class="media-grid">'+
+      files.map(x=>{const url=db.storage.from('bregan-media').getPublicUrl(x.name).data.publicUrl;const image=/\.(png|jpe?g|webp|gif|svg)$/i.test(x.name);return '<div class="media-item">'+(image?'<img src="'+esc(url)+'" alt="">':'<div class="empty">FILE</div>')+'<div><strong>'+esc(x.name)+'</strong><br><a class="icon-btn" href="'+esc(url)+'" target="_blank">Open</a> <button class="icon-btn" data-delete-media="'+esc(x.name)+'">Delete</button></div></div>'}).join('')+
+      '</div></div>';
+    document.getElementById('mediaUpload').onchange=async e=>{for(const file of e.target.files){try{await uploadAsset(file,'library')}catch(err){alert(err.message||err);break}}renderMedia()};
+    panel.querySelectorAll('[data-delete-media]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this media file? Existing pages using it may lose the image.'))return;const {error}=await db.storage.from('bregan-media').remove([b.dataset.deleteMedia]);if(error)alert(error.message);else renderMedia()});
   }
-
   async function renderTeam(){
     if(!allowed('super_admin')){panel.innerHTML='<div class="card">'+notice('Only Super Admin can manage team roles.')+'</div>';return}
     const {data,error}=await db.from('profiles').select('*').order('created_at'); if(error)throw error;
