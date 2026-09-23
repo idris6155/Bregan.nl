@@ -3,6 +3,8 @@
   let PRODUCTS = window.BREGAN_PRODUCTS || [];
   let PAGE_OVERRIDES = [];
   let SETTINGS = {};
+  let CMS_PAGE = null;
+  let CMS_GLOBALS = {};
   const CMS_URL='https://bblhnlkqalgnxeesdjgh.supabase.co';
   const CMS_KEY='sb_publishable_TNm4y3FxI_jMngStlTse2g_J_SUuW6h';
 
@@ -11,11 +13,15 @@
       const headers={apikey:CMS_KEY};
       const cmsLang=new URLSearchParams(location.search).get('lang')||localStorage.getItem('breganLang')||'en';
       const cmsPage=location.pathname.split('/').pop()||'index.html';
-      const [pr,cr,sr,orr]=await Promise.all([
+      const customSlug=new URLSearchParams(location.search).get('slug')||'';
+      const pageFilter=(cmsPage==='page.html'&&customSlug)?'&slug=eq.'+encodeURIComponent(customSlug):'&source_file=eq.'+encodeURIComponent(cmsPage);
+      const [pr,cr,sr,orr,pgr,ggr]=await Promise.all([
         fetch(CMS_URL+'/rest/v1/products?select=*&status=eq.published&order=sort_order.asc,name.asc',{headers}),
         fetch(CMS_URL+'/rest/v1/content_entries?select=key,value&status=eq.published',{headers}),
         fetch(CMS_URL+'/rest/v1/site_settings?select=key,value',{headers}),
-        fetch(CMS_URL+'/rest/v1/page_overrides?select=selector,lang,kind,value&status=eq.published&page=eq.'+encodeURIComponent(cmsPage)+'&or=(lang.eq.'+cmsLang+',lang.eq.all)',{headers})
+        fetch(CMS_URL+'/rest/v1/page_overrides?select=selector,lang,kind,value&status=eq.published&page=eq.'+encodeURIComponent(cmsPage)+'&or=(lang.eq.'+cmsLang+',lang.eq.all)',{headers}),
+        fetch(CMS_URL+'/rest/v1/cms_pages?select=slug,internal_name,page_kind,source_file,published_data,published_seo,status,version,published_at&status=eq.published'+pageFilter,{headers}),
+        fetch(CMS_URL+'/rest/v1/cms_globals?select=key,published_data,version',{headers})
       ]);
       if(pr.ok){
         const rows=await pr.json();
@@ -34,6 +40,8 @@
         const rows=await orr.json();
         PAGE_OVERRIDES=Array.isArray(rows)?rows:[];
       }
+      if(pgr.ok){const rows=await pgr.json();CMS_PAGE=Array.isArray(rows)&&rows.length?rows[0]:null;}
+      if(ggr.ok){const rows=await ggr.json();CMS_GLOBALS=Object.fromEntries((rows||[]).map(x=>[x.key,x.published_data||{}]));}
       if(sr.ok){
         const rows=await sr.json(); SETTINGS=Object.fromEntries((rows||[]).map(x=>[x.key,x.value||{}])); const v=SETTINGS.visuals||{};
         if(!new URLSearchParams(location.search).get('lang')&&!localStorage.getItem('breganLang')&&SETTINGS.languages?.default) state.lang=SETTINGS.languages.default;
@@ -68,6 +76,43 @@
   const esc = (s='') => String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const withLang = href => { const u = new URL(href, location.href); u.searchParams.set('lang', state.lang); return u.pathname.split('/').pop() + '?' + u.searchParams.toString() + (u.hash || ''); };
 
+  const cmsText=value=>value?.[state.lang]||value?.en||'';
+  function cmsHref(href){
+    const h=String(href||'').trim();
+    if(!h)return '#';
+    if(/^(https?:|mailto:|tel:|#)/i.test(h))return h;
+    return withLang(h);
+  }
+  function applyCmsPageLayout(){
+    if(!CMS_PAGE||CMS_PAGE.page_kind!=='existing')return;
+    const sections=[...(CMS_PAGE.published_data?.sections||[])].sort((a,b)=>(a.order||0)-(b.order||0));
+    const found=sections.map(s=>{try{return {s,el:document.querySelector(s.selector)}}catch(_){return null}}).filter(x=>x?.el);
+    found.forEach(x=>{x.el.style.display=x.s.visible===false?'none':''});
+    const parent=found[0]?.el?.parentElement;
+    if(!parent||found.some(x=>x.el.parentElement!==parent))return;
+    const desired=found.map(x=>x.el);
+    const current=[...parent.children].filter(el=>desired.includes(el));
+    const mismatch=current.length!==desired.length||current.some((el,i)=>el!==desired[i]);
+    if(mismatch)desired.forEach(el=>parent.appendChild(el));
+  }
+  function renderCmsCustomPage(){
+    if(page!=='custom')return;
+    const root=document.getElementById('customPage');if(!root)return;
+    if(!CMS_PAGE){
+      root.innerHTML='<section class="page-hero"><div class="container"><div class="eyebrow">BREGAN</div><h1>Page not found</h1><p>The requested page is not published.</p></div></section>';
+      return;
+    }
+    const blockHtml=block=>{
+      const eyebrow=esc(cmsText(block.eyebrow)),title=esc(cmsText(block.title)),body=esc(cmsText(block.body));
+      const button=cmsText(block.button_label);
+      if(block.type==='hero')return '<section class="cms-page-hero"'+(block.image_url?' style="background-image:linear-gradient(90deg,rgba(8,34,54,.88),rgba(8,34,54,.35)),url(\''+esc(block.image_url)+'\')"':'')+'><div class="container"><div class="eyebrow">'+eyebrow+'</div><h1>'+title+'</h1><p>'+body+'</p>'+(button?'<a class="btn btn-orange" href="'+esc(cmsHref(block.button_href))+'">'+esc(button)+'</a>':'')+'</div></section>';
+      if(block.type==='image_text')return '<section class="section cms-image-text"><div class="container cms-image-text-grid">'+(block.image_url?'<img src="'+esc(block.image_url)+'" alt="'+title+'">':'<div class="cms-image-placeholder"></div>')+'<div><div class="eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p class="lead">'+body+'</p></div></div></section>';
+      if(block.type==='cta')return '<section class="cta"><div class="container"><div class="cta-box"><div><h2>'+title+'</h2><p>'+body+'</p></div>'+(button?'<a class="btn btn-navy" href="'+esc(cmsHref(block.button_href))+'">'+esc(button)+'</a>':'')+'</div></div></section>';
+      return '<section class="section"><div class="container cms-rich-text"><div class="eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p class="lead">'+body+'</p></div></section>';
+    };
+    root.innerHTML=(CMS_PAGE.published_data?.sections||[]).map(blockHtml).join('');
+  }
+
   function applyPageOverrides(){
     const rows=[...PAGE_OVERRIDES].sort((a,b)=>(a.lang==='all'?0:1)-(b.lang==='all'?0:1));
     rows.forEach(o=>{
@@ -94,22 +139,51 @@
     let timer=0;
     const observer=new MutationObserver(()=>{
       clearTimeout(timer);
-      timer=setTimeout(applyPageOverrides,60);
+      timer=setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},60);
     });
     observer.observe(document.body,{childList:true,subtree:true});
   }
 
   function header(){
-    const active=name=>page===name?' is-active':'';
     const enabledLangs=SETTINGS.languages?.enabled||['en','de'];
     const brandName=SETTINGS.brand?.company||'Bregan B.V.';
     const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
-    return `<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="${withLang('index.html')}" aria-label="${esc(brandName)} home"><img class="brand-logo-image" src="${esc(logoUrl)}" alt="${esc(brandName)} — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary"><a class="${active('home')}" href="${withLang('index.html')}" data-i18n="nav_home">${tr('nav_home')}</a><a class="${active('products')}" href="${withLang('products.html')}" data-i18n="nav_products">${tr('nav_products')}</a><a class="${active('solutions')}" href="${withLang('solutions.html')}" data-i18n="nav_solutions">${tr('nav_solutions')}</a><a class="${active('about')}" href="${withLang('about.html')}" data-i18n="nav_about">${tr('nav_about')}</a><a class="${active('insights')}" href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a class="${active('contact')}" href="${withLang('contact.html')}" data-i18n="nav_contact">${tr('nav_contact')}</a></nav><div class="header-actions"><div class="lang-switch" aria-label="Language">${enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':''}${enabledLangs.length>1?'<span>/</span>':''}${enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':''}</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote data-i18n="quote">${tr('quote')}</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav><a href="${withLang('index.html')}">${tr('nav_home')}</a><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a href="${withLang('contact.html')}">${tr('nav_contact')}</a><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></nav></div>`;
+    const fallback=[
+      {label:{en:tr('nav_home'),de:tr('nav_home')},href:'index.html',visible:true},
+      {label:{en:tr('nav_products'),de:tr('nav_products')},href:'products.html',visible:true},
+      {label:{en:tr('nav_solutions'),de:tr('nav_solutions')},href:'solutions.html',visible:true},
+      {label:{en:tr('nav_about'),de:tr('nav_about')},href:'about.html',visible:true},
+      {label:{en:'Insights',de:'Wissen'},href:'insights.html',visible:true},
+      {label:{en:tr('nav_contact'),de:tr('nav_contact')},href:'contact.html',visible:true}
+    ];
+    const items=(CMS_GLOBALS.navigation?.items||fallback).filter(x=>x.visible!==false);
+    const currentFile=location.pathname.split('/').pop()||'index.html';
+    const currentSlug=new URLSearchParams(location.search).get('slug')||'';
+    const active=item=>{
+      const href=String(item.href||'');
+      if(currentFile==='page.html'&&href.startsWith('page.html')){
+        return new URL(href,location.href).searchParams.get('slug')===currentSlug?' is-active':'';
+      }
+      return href.split('?')[0]===currentFile?' is-active':'';
+    };
+    const navHtml=items.map(item=>'<a class="'+active(item)+'" href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join('');
+    const mobileHtml=items.map(item=>'<a href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join('');
+    return '<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="'+esc(cmsHref('index.html'))+'" aria-label="'+esc(brandName)+' home"><img class="brand-logo-image" src="'+esc(logoUrl)+'" alt="'+esc(brandName)+' — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary">'+navHtml+'</nav><div class="header-actions"><div class="lang-switch" aria-label="Language">'+(enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':'')+(enabledLangs.length>1?'<span>/</span>':'')+(enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':'')+'</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote>'+esc(tr('quote'))+'</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav>'+mobileHtml+'<button class="btn btn-orange" data-open-quote>'+esc(tr('quote'))+'</button></nav></div>';
   }
 
   function footer(){
-    const brand=SETTINGS.brand||{}; const contactEmail=brand.email||'info@bregan.nl'; const locationLabel=brand.location||'Breda · The Netherlands'; const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
-    return `<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="${esc(logoUrl)}" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>${tr('footer_blurb')}</p><div class="footer-chip">a Dutch Animal Nutrition Company</div></div><div><h4>${tr('footer_links')}</h4><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a></div><div><h4>${tr('footer_contact')}</h4><a href="mailto:${esc(contactEmail)}">${esc(contactEmail)}</a><p>${esc(locationLabel)}</p></div><div class="footer-cta"><p>${state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?'}</p><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></div></div><div class="footer-bottom container"><span>© ${new Date().getFullYear()} Bregan B.V.</span><a href="${withLang('privacy.html')}">${state.lang==='de'?'Datenschutz':'Privacy'}</a><span>${esc(locationLabel)}</span></div></footer>`;
+    const brand=SETTINGS.brand||{};
+    const contactEmail=brand.email||'info@bregan.nl';
+    const locationLabel=brand.location||'Breda · The Netherlands';
+    const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
+    const cfg=CMS_GLOBALS.footer||{};
+    const blurb=cmsText(cfg.blurb)||tr('footer_blurb');
+    const chip=cmsText(cfg.chip)||'a Dutch Animal Nutrition Company';
+    const cta=cmsText(cfg.cta)||(state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?');
+    const navItems=(CMS_GLOBALS.navigation?.items||[]).filter(x=>x.visible!==false).filter(x=>!String(x.href||'').startsWith('index.html')).slice(0,5);
+    const links=navItems.length?navItems.map(item=>'<a href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join(''):'<a href="'+esc(cmsHref('products.html'))+'">'+esc(tr('nav_products'))+'</a><a href="'+esc(cmsHref('solutions.html'))+'">'+esc(tr('nav_solutions'))+'</a><a href="'+esc(cmsHref('about.html'))+'">'+esc(tr('nav_about'))+'</a>';
+    const privacy=cfg.show_privacy===false?'':'<a href="'+esc(cmsHref('privacy.html'))+'">'+(state.lang==='de'?'Datenschutz':'Privacy')+'</a>';
+    return '<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="'+esc(logoUrl)+'" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>'+esc(blurb)+'</p><div class="footer-chip">'+esc(chip)+'</div></div><div><h4>'+esc(tr('footer_links'))+'</h4>'+links+'</div><div><h4>'+esc(tr('footer_contact'))+'</h4><a href="mailto:'+esc(contactEmail)+'">'+esc(contactEmail)+'</a><p>'+esc(locationLabel)+'</p></div><div class="footer-cta"><p>'+esc(cta)+'</p><button class="btn btn-orange" data-open-quote>'+esc(tr('quote'))+'</button></div></div><div class="footer-bottom container"><span>© '+new Date().getFullYear()+' Bregan B.V.</span>'+privacy+'<span>'+esc(locationLabel)+'</span></div></footer>';
   }
 
   function formMarkup(id){
@@ -187,7 +261,10 @@
       'aquaculture.html':state.lang==='de'?'Bregan Premixe und funktionelle Futterzusätze für moderne Aquakultur und Aquafutter.':'Bregan premixes and functional feed additives for modern aquaculture and aquafeed.',
       'privacy.html':state.lang==='de'?'Datenschutzhinweise für die Bregan B.V. Website.':'Privacy information for the Bregan B.V. website.'
     };
-    let description=descriptions[file]||document.querySelector('meta[name="description"]')?.content||'Bregan B.V.';
+    const cmsSeo=CMS_PAGE?.published_seo||{};
+    const cmsSeoLang=cmsSeo[state.lang]||cmsSeo.en||{};
+    if(cmsSeoLang.title)document.title=cmsSeoLang.title;
+    let description=cmsSeoLang.description||descriptions[file]||document.querySelector('meta[name="description"]')?.content||'Bregan B.V.';
     if(file==='product.html'){
       description=document.querySelector('.detail-copy .lead')?.textContent?.trim()||description;
     }
@@ -203,6 +280,10 @@
       const id=new URLSearchParams(location.search).get('id');
       if(id)canonicalParams.set('id',id);
     }
+    if(file==='page.html'){
+      const slug=CMS_PAGE?.slug||new URLSearchParams(location.search).get('slug');
+      if(slug)canonicalParams.set('slug',slug);
+    }
     const canonical=baseUrl+file+'?'+canonicalParams.toString();
     let link=document.head.querySelector('link[rel="canonical"]');
     if(!link){link=document.createElement('link');link.rel='canonical';document.head.appendChild(link);}
@@ -216,7 +297,7 @@
     if(!xd){xd=document.createElement('link');xd.rel='alternate';xd.hreflang='x-default';document.head.appendChild(xd);}
     const xq=new URLSearchParams(canonicalParams);xq.set('lang','en');xd.href=baseUrl+file+'?'+xq.toString();
     const title=document.title;
-    const logo=baseUrl+'assets/images/bregan-logo.webp?v=4';
+    const logo=cmsSeo.og_image_url||SETTINGS.visuals?.logo||baseUrl+'assets/images/bregan-logo.webp?v=4';
     ensureMeta('meta[name="description"]',{name:'description',content:description});
     ensureMeta('meta[name="robots"]',{name:'robots',content:file==='404.html'?'noindex,follow':'index,follow,max-image-preview:large'});
     ensureMeta('meta[property="og:title"]',{property:'og:title',content:title});
@@ -290,7 +371,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();applyPageOverrides();setupOverrideObserver();setTimeout(applyPageOverrides,350);setTimeout(applyPageOverrides,1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();renderCmsCustomPage();applyCmsPageLayout();setupSeo();setupForms();setupMotion();applyPageOverrides();setupOverrideObserver();setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},350);setTimeout(()=>{applyPageOverrides();applyCmsPageLayout()},1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
