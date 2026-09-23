@@ -145,16 +145,45 @@
   }
 
   function header(){
-    const active=name=>page===name?' is-active':'';
     const enabledLangs=SETTINGS.languages?.enabled||['en','de'];
     const brandName=SETTINGS.brand?.company||'Bregan B.V.';
     const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
-    return `<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="${withLang('index.html')}" aria-label="${esc(brandName)} home"><img class="brand-logo-image" src="${esc(logoUrl)}" alt="${esc(brandName)} — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary"><a class="${active('home')}" href="${withLang('index.html')}" data-i18n="nav_home">${tr('nav_home')}</a><a class="${active('products')}" href="${withLang('products.html')}" data-i18n="nav_products">${tr('nav_products')}</a><a class="${active('solutions')}" href="${withLang('solutions.html')}" data-i18n="nav_solutions">${tr('nav_solutions')}</a><a class="${active('about')}" href="${withLang('about.html')}" data-i18n="nav_about">${tr('nav_about')}</a><a class="${active('insights')}" href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a class="${active('contact')}" href="${withLang('contact.html')}" data-i18n="nav_contact">${tr('nav_contact')}</a></nav><div class="header-actions"><div class="lang-switch" aria-label="Language">${enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':''}${enabledLangs.length>1?'<span>/</span>':''}${enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':''}</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote data-i18n="quote">${tr('quote')}</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav><a href="${withLang('index.html')}">${tr('nav_home')}</a><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a href="${withLang('contact.html')}">${tr('nav_contact')}</a><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></nav></div>`;
+    const fallback=[
+      {label:{en:tr('nav_home'),de:tr('nav_home')},href:'index.html',visible:true},
+      {label:{en:tr('nav_products'),de:tr('nav_products')},href:'products.html',visible:true},
+      {label:{en:tr('nav_solutions'),de:tr('nav_solutions')},href:'solutions.html',visible:true},
+      {label:{en:tr('nav_about'),de:tr('nav_about')},href:'about.html',visible:true},
+      {label:{en:'Insights',de:'Wissen'},href:'insights.html',visible:true},
+      {label:{en:tr('nav_contact'),de:tr('nav_contact')},href:'contact.html',visible:true}
+    ];
+    const items=(CMS_GLOBALS.navigation?.items||fallback).filter(x=>x.visible!==false);
+    const currentFile=location.pathname.split('/').pop()||'index.html';
+    const currentSlug=new URLSearchParams(location.search).get('slug')||'';
+    const active=item=>{
+      const href=String(item.href||'');
+      if(currentFile==='page.html'&&href.startsWith('page.html')){
+        return new URL(href,location.href).searchParams.get('slug')===currentSlug?' is-active':'';
+      }
+      return href.split('?')[0]===currentFile?' is-active':'';
+    };
+    const navHtml=items.map(item=>'<a class="'+active(item)+'" href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join('');
+    const mobileHtml=items.map(item=>'<a href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join('');
+    return '<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="'+esc(cmsHref('index.html'))+'" aria-label="'+esc(brandName)+' home"><img class="brand-logo-image" src="'+esc(logoUrl)+'" alt="'+esc(brandName)+' — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary">'+navHtml+'</nav><div class="header-actions"><div class="lang-switch" aria-label="Language">'+(enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':'')+(enabledLangs.length>1?'<span>/</span>':'')+(enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':'')+'</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote>'+esc(tr('quote'))+'</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav>'+mobileHtml+'<button class="btn btn-orange" data-open-quote>'+esc(tr('quote'))+'</button></nav></div>';
   }
 
   function footer(){
-    const brand=SETTINGS.brand||{}; const contactEmail=brand.email||'info@bregan.nl'; const locationLabel=brand.location||'Breda · The Netherlands'; const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
-    return `<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="${esc(logoUrl)}" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>${tr('footer_blurb')}</p><div class="footer-chip">a Dutch Animal Nutrition Company</div></div><div><h4>${tr('footer_links')}</h4><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a></div><div><h4>${tr('footer_contact')}</h4><a href="mailto:${esc(contactEmail)}">${esc(contactEmail)}</a><p>${esc(locationLabel)}</p></div><div class="footer-cta"><p>${state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?'}</p><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></div></div><div class="footer-bottom container"><span>© ${new Date().getFullYear()} Bregan B.V.</span><a href="${withLang('privacy.html')}">${state.lang==='de'?'Datenschutz':'Privacy'}</a><span>${esc(locationLabel)}</span></div></footer>`;
+    const brand=SETTINGS.brand||{};
+    const contactEmail=brand.email||'info@bregan.nl';
+    const locationLabel=brand.location||'Breda · The Netherlands';
+    const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
+    const cfg=CMS_GLOBALS.footer||{};
+    const blurb=cmsText(cfg.blurb)||tr('footer_blurb');
+    const chip=cmsText(cfg.chip)||'a Dutch Animal Nutrition Company';
+    const cta=cmsText(cfg.cta)||(state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?');
+    const navItems=(CMS_GLOBALS.navigation?.items||[]).filter(x=>x.visible!==false).filter(x=>!String(x.href||'').startsWith('index.html')).slice(0,5);
+    const links=navItems.length?navItems.map(item=>'<a href="'+esc(cmsHref(item.href))+'">'+esc(cmsText(item.label))+'</a>').join(''):'<a href="'+esc(cmsHref('products.html'))+'">'+esc(tr('nav_products'))+'</a><a href="'+esc(cmsHref('solutions.html'))+'">'+esc(tr('nav_solutions'))+'</a><a href="'+esc(cmsHref('about.html'))+'">'+esc(tr('nav_about'))+'</a>';
+    const privacy=cfg.show_privacy===false?'':'<a href="'+esc(cmsHref('privacy.html'))+'">'+(state.lang==='de'?'Datenschutz':'Privacy')+'</a>';
+    return '<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="'+esc(logoUrl)+'" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>'+esc(blurb)+'</p><div class="footer-chip">'+esc(chip)+'</div></div><div><h4>'+esc(tr('footer_links'))+'</h4>'+links+'</div><div><h4>'+esc(tr('footer_contact'))+'</h4><a href="mailto:'+esc(contactEmail)+'">'+esc(contactEmail)+'</a><p>'+esc(locationLabel)+'</p></div><div class="footer-cta"><p>'+esc(cta)+'</p><button class="btn btn-orange" data-open-quote>'+esc(tr('quote'))+'</button></div></div><div class="footer-bottom container"><span>© '+new Date().getFullYear()+' Bregan B.V.</span>'+privacy+'<span>'+esc(locationLabel)+'</span></div></footer>';
   }
 
   function formMarkup(id){
