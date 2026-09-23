@@ -27,6 +27,7 @@
         <label>Password<input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
         <button class="btn secondary" type="submit">Create account</button>
       </form>
+      <p class="auth-help">Already created an account? Use <strong>Sign in</strong>. You do not need to create it again.</p>
       <p id="authMessage" class="message"></p>
     </div>
   </div>
@@ -39,8 +40,9 @@
       </div>
       <nav id="nav">
         <button data-view="dashboard" class="active">Dashboard</button>
+        <button data-view="siteEditor">Live site editor</button>
         <button data-view="products">Products</button>
-        <button data-view="content">Website text</button>
+        <button data-view="content">All text fields</button>
         <button data-view="events">Events</button>
         <button data-view="documents">Documents</button>
         <button data-view="inquiries">Inquiries</button>
