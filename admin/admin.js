@@ -216,8 +216,30 @@
 
   async function renderSettings(){
     const {data,error}=await db.from('site_settings').select('*').order('key'); if(error)throw error;
-    panel.innerHTML='<div class="card"><div class="card-head"><h2>Site settings</h2></div>'+data.map(x=>'<form class="stack form-section setting-form" data-key="'+esc(x.key)+'"><h3>'+esc(x.key)+'</h3><label>JSON value<textarea name="value" rows="5">'+esc(JSON.stringify(x.value,null,2))+'</textarea></label><button class="btn secondary">Save</button></form>').join('')+'</div>';
-    panel.querySelectorAll('.setting-form').forEach(f=>f.onsubmit=async e=>{e.preventDefault();let value;try{value=JSON.parse(new FormData(f).get('value'))}catch{alert('Invalid JSON');return}const {error}=await db.from('site_settings').update({value,updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('key',f.dataset.key);if(error)alert(error.message);else e.submitter.textContent='Saved'});
+    const visuals=(data||[]).find(x=>x.key==='visuals')?.value||{};
+    const other=(data||[]).filter(x=>x.key!=='visuals');
+    panel.innerHTML=
+      '<div class="card"><div class="card-head"><div><h2>Website visuals</h2><p class="muted">Change the main website photography without editing code.</p></div></div>'+
+      '<form id="visualForm" class="stack">'+
+      '<label>Homepage hero image URL<input name="hero" value="'+esc(visuals.hero||'')+'"></label>'+
+      '<label>Inner page hero image URL<input name="page_hero" value="'+esc(visuals.page_hero||'')+'"></label>'+
+      '<div class="grid-2"><label>Poultry image URL<input name="poultry" value="'+esc(visuals.poultry||'')+'"></label><label>Ruminant image URL<input name="ruminant" value="'+esc(visuals.ruminant||'')+'"></label></div>'+
+      '<div class="grid-2"><label>Aquaculture image URL<input name="aqua" value="'+esc(visuals.aqua||'')+'"></label><label>Feed mill image URL<input name="feedmills" value="'+esc(visuals.feedmills||'')+'"></label></div>'+
+      '<button class="btn primary">Save visual settings</button></form></div>'+
+      '<div class="card"><div class="card-head"><h2>Advanced settings</h2></div>'+
+      other.map(x=>'<form class="stack form-section setting-form" data-key="'+esc(x.key)+'"><h3>'+esc(x.key)+'</h3><label>JSON value<textarea name="value" rows="5">'+esc(JSON.stringify(x.value,null,2))+'</textarea></label><button class="btn secondary">Save</button></form>').join('')+
+      '</div>';
+    document.getElementById('visualForm').onsubmit=async e=>{
+      e.preventDefault();const f=new FormData(e.currentTarget);
+      const value={hero:f.get('hero'),page_hero:f.get('page_hero'),poultry:f.get('poultry'),ruminant:f.get('ruminant'),aqua:f.get('aqua'),feedmills:f.get('feedmills')};
+      const {error}=await db.from('site_settings').upsert({key:'visuals',value,updated_by:session.user.id,updated_at:new Date().toISOString()});
+      if(error)alert(error.message);else e.submitter.textContent='Saved';
+    };
+    panel.querySelectorAll('.setting-form').forEach(f=>f.onsubmit=async e=>{
+      e.preventDefault();let value;try{value=JSON.parse(new FormData(f).get('value'))}catch{alert('Invalid JSON');return}
+      const {error}=await db.from('site_settings').update({value,updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('key',f.dataset.key);
+      if(error)alert(error.message);else e.submitter.textContent='Saved';
+    });
   }
 
   bootstrap().catch(err=>{authMessage.textContent=err.message});
