@@ -103,6 +103,173 @@
   }
 
 
+
+  function cmsClone(value){return JSON.parse(JSON.stringify(value??{}))}
+  function cmsSlug(value){return String(value||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
+  function cmsPageHref(page,lang='en'){
+    return page.page_kind==='custom'?'../page.html?slug='+encodeURIComponent(page.slug)+'&lang='+lang:'../'+page.source_file+'?lang='+lang;
+  }
+  async function cmsSaveRevision(entityType,entityKey,version,snapshot,note){
+    const {error}=await db.from('cms_revisions').insert({
+      entity_type:entityType,entity_key:entityKey,version,snapshot,note:note||null,actor_id:session.user.id
+    });
+    if(error)throw error;
+  }
+  async function cmsPublishPage(page,draftData,draftSeo){
+    const nextVersion=(page.version||0)+1;
+    const publishedAt=new Date().toISOString();
+    const {data,error}=await db.from('cms_pages').update({
+      published_data:draftData,published_seo:draftSeo,status:'published',version:nextVersion,
+      has_unpublished_changes:false,published_by:session.user.id,updated_by:session.user.id,
+      published_at:publishedAt,updated_at:publishedAt
+    }).eq('id',page.id).select('*').single();
+    if(error)throw error;
+    await cmsSaveRevision('page',page.slug,nextVersion,{
+      published_data:draftData,published_seo:draftSeo,status:'published',
+      page_kind:page.page_kind,source_file:page.source_file,internal_name:page.internal_name
+    },'Published '+page.internal_name);
+    return data;
+  }
+  function cmsBlockLabel(block){
+    const labels={hero:'Hero',rich_text:'Text section',image_text:'Image + text',cta:'Call to action'};
+    return labels[block.type]||block.type||'Section';
+  }
+  function cmsCustomPreview(block,lang='en'){
+    const val=(obj)=>obj?.[lang]||obj?.en||'';
+    if(block.type==='hero'){
+      return '<section class="pb-preview-block pb-preview-hero"'+(block.image_url?' style="background-image:linear-gradient(90deg,rgba(10,39,61,.82),rgba(10,39,61,.28)),url(\''+esc(block.image_url)+'\')"':'')+'><small>'+esc(val(block.eyebrow))+'</small><h1>'+esc(val(block.title))+'</h1><p>'+esc(val(block.body))+'</p>'+(val(block.button_label)?'<span class="btn primary">'+esc(val(block.button_label))+'</span>':'')+'</section>';
+    }
+    if(block.type==='image_text'){
+      return '<section class="pb-preview-block"><div class="pb-preview-grid">'+(block.image_url?'<img src="'+esc(block.image_url)+'" alt="">':'<div class="pb-image-placeholder">Image</div>')+'<div><small>'+esc(val(block.eyebrow))+'</small><h2>'+esc(val(block.title))+'</h2><p>'+esc(val(block.body))+'</p></div></div></section>';
+    }
+    if(block.type==='cta'){
+      return '<section class="pb-preview-block pb-preview-cta"><h2>'+esc(val(block.title))+'</h2><p>'+esc(val(block.body))+'</p>'+(val(block.button_label)?'<span class="btn primary">'+esc(val(block.button_label))+'</span>':'')+'</section>';
+    }
+    return '<section class="pb-preview-block"><small>'+esc(val(block.eyebrow))+'</small><h2>'+esc(val(block.title))+'</h2><p>'+esc(val(block.body))+'</p></section>';
+  }
+  async function cmsPreviewDraft(page,draftData,draftSeo){
+    const lang='en';
+    if(page.page_kind==='custom'){
+      const html=(draftData.sections||[]).map(b=>cmsCustomPreview(b,lang)).join('')||'<div class="empty">This page has no sections yet.</div>';
+      openModal('<h2>Draft preview · '+esc(page.internal_name)+'</h2><p class="muted">This is the unpublished draft.</p><div class="pb-preview">'+html+'</div>');
+      return;
+    }
+    openModal('<h2>Draft preview · '+esc(page.internal_name)+'</h2><p class="muted">Section visibility and order below are the unpublished draft.</p><iframe id="pageDraftPreview" class="live-editor-frame" title="Draft preview"></iframe>');
+    const frame=document.getElementById('pageDraftPreview');
+    frame.src=cmsPageHref(page,lang)+'&cms_draft_preview='+Date.now();
+    frame.addEventListener('load',()=>{
+      const doc=frame.contentDocument;if(!doc)return;
+      const sections=[...(draftData.sections||[])].sort((a,b)=>(a.order||0)-(b.order||0));
+      const found=sections.map(s=>({s,el:doc.querySelector(s.selector)})).filter(x=>x.el);
+      found.forEach(x=>{x.el.style.display=x.s.visible===false?'none':''});
+      const parent=found.find(x=>x.el)?.el?.parentElement;
+      if(parent)found.forEach(x=>parent.appendChild(x.el));
+      const seo=draftSeo?.[lang]||{};
+      if(seo.title)doc.title=seo.title;
+    });
+  }
+  async function renderPages(){
+    if(!allowed('super_admin','marketing')){panel.innerHTML='<div class="card">'+notice('Page Builder is available to Super Admin and Marketing users.')+'</div>';return}
+    const {data,error}=await db.from('cms_pages').select('*').order('page_kind').order('internal_name');if(error)throw error;
+    panel.innerHTML='<div class="card"><div class="card-head"><div><h2>Pages & Page Builder</h2><p class="muted">Manage existing layouts or create new pages without editing code.</p></div><button id="newCmsPage" class="btn primary">+ New page</button></div><div class="table-wrap"><table><thead><tr><th>Page</th><th>Type</th><th>State</th><th>Version</th><th></th></tr></thead><tbody>'+
+      data.map(p=>'<tr><td><strong>'+esc(p.internal_name)+'</strong><br><small>'+esc(p.page_kind==='custom'?'page.html?slug='+p.slug:p.source_file)+'</small></td><td>'+esc(p.page_kind)+'</td><td>'+(p.status==='published'?'<span class="pill published">published</span>':'<span class="pill draft">'+esc(p.status)+'</span>')+(p.has_unpublished_changes?' <span class="pill draft">draft changes</span>':'')+'</td><td>v'+esc(p.version)+'</td><td><div class="row-actions"><button class="icon-btn" data-edit-page="'+p.id+'">Edit</button><button class="icon-btn" data-preview-page="'+p.id+'">Preview</button>'+(p.status==='published'?'<a class="icon-btn" href="'+esc(cmsPageHref(p))+'" target="_blank">Open ↗</a>':'')+'</div></td></tr>').join('')+
+      '</tbody></table></div></div>';
+    document.getElementById('newCmsPage').onclick=()=>{
+      openModal('<h2>Create a new page</h2><form id="newCmsPageForm" class="stack"><label>Page name<input name="name" required placeholder="e.g. Distributors"></label><label>URL slug<input name="slug" required placeholder="distributors"></label><button class="btn primary">Create draft page</button></form>');
+      const form=document.getElementById('newCmsPageForm');
+      const name=form.elements.name,slug=form.elements.slug;
+      name.oninput=()=>{if(!slug.dataset.touched)slug.value=cmsSlug(name.value)};
+      slug.oninput=()=>{slug.dataset.touched='1';slug.value=cmsSlug(slug.value)};
+      form.onsubmit=async e=>{
+        e.preventDefault();const ff=new FormData(form);const s=cmsSlug(ff.get('slug'));if(!s){alert('Enter a valid slug.');return}
+        const emptySeo={en:{title:ff.get('name')+' | Bregan B.V.',description:''},de:{title:ff.get('name')+' | Bregan B.V.',description:''},og_image_url:''};
+        const {data:created,error}=await db.from('cms_pages').insert({
+          slug:s,internal_name:ff.get('name'),page_kind:'custom',source_file:null,
+          draft_data:{sections:[]},published_data:{sections:[]},draft_seo:emptySeo,published_seo:{},
+          status:'draft',has_unpublished_changes:true,created_by:session.user.id,updated_by:session.user.id
+        }).select('*').single();
+        if(error){alert(error.message);return}closeModal();openCmsPageEditor(created);
+      };
+    };
+    panel.querySelectorAll('[data-edit-page]').forEach(b=>b.onclick=()=>openCmsPageEditor(data.find(p=>String(p.id)===b.dataset.editPage)));
+    panel.querySelectorAll('[data-preview-page]').forEach(b=>b.onclick=()=>{const p=data.find(x=>String(x.id)===b.dataset.previewPage);cmsPreviewDraft(p,p.draft_data||{},p.draft_seo||{})});
+  }
+  function openCmsPageEditor(page){
+    let workingData=cmsClone(page.draft_data||{sections:[]});
+    let workingSeo=cmsClone(page.draft_seo||{});
+    if(!Array.isArray(workingData.sections))workingData.sections=[];
+    const renderEditor=()=>{
+      const isCustom=page.page_kind==='custom';
+      panel.innerHTML='<div class="card"><div class="card-head"><div><button id="backPages" class="icon-btn">← Pages</button><h2 class="pb-editor-title">'+esc(page.internal_name)+'</h2><p class="muted">'+(isCustom?'Custom page · page.html?slug='+esc(page.slug):'Existing page · '+esc(page.source_file))+'</p></div><div class="row-actions"><button id="previewCmsPage" class="btn secondary">Preview draft</button><button id="saveCmsPage" class="btn secondary">Save draft</button><button id="publishCmsPage" class="btn primary">Publish</button></div></div>'+
+        '<div class="grid-2"><label class="field">Page name<input id="cmsPageName" value="'+esc(page.internal_name)+'"></label><label class="field">Slug<input id="cmsPageSlug" value="'+esc(page.slug)+'" '+(!isCustom||page.status==='published'?'disabled':'')+'></label></div>'+
+        '<div class="card form-section"><div class="card-head"><div><h2>SEO</h2><p class="muted">Search title and description shown to Google and social previews.</p></div></div><div class="grid-2"><label class="field">SEO title EN<input id="seoTitleEn" value="'+esc(workingSeo.en?.title||'')+'"></label><label class="field">SEO title DE<input id="seoTitleDe" value="'+esc(workingSeo.de?.title||'')+'"></label></div><div class="grid-2"><label class="field">Description EN<textarea id="seoDescEn" rows="3">'+esc(workingSeo.en?.description||'')+'</textarea></label><label class="field">Description DE<textarea id="seoDescDe" rows="3">'+esc(workingSeo.de?.description||'')+'</textarea></label></div><label class="field">Social share image'+(workingSeo.og_image_url?'<img class="image-preview" src="'+esc(workingSeo.og_image_url)+'" alt="">':'')+'<input id="seoImageFile" type="file" accept="image/*"></label></div>'+
+        '<div class="card form-section"><div class="card-head"><div><h2>'+(isCustom?'Page sections':'Existing page layout')+'</h2><p class="muted">'+(isCustom?'Add, edit and reorder page blocks.':'Show, hide or reorder the existing sections without touching code.')+'</p></div>'+(isCustom?'<div class="toolbar"><button class="btn secondary" data-add-block="hero">+ Hero</button><button class="btn secondary" data-add-block="rich_text">+ Text</button><button class="btn secondary" data-add-block="image_text">+ Image + text</button><button class="btn secondary" data-add-block="cta">+ CTA</button></div>':'')+'</div><div id="cmsSections"></div></div>';
+      document.getElementById('backPages').onclick=renderPages;
+      const list=document.getElementById('cmsSections');
+      if(isCustom){
+        list.innerHTML=workingData.sections.length?workingData.sections.map((b,i)=>'<div class="pb-section-row"><div><strong>'+esc(cmsBlockLabel(b))+'</strong><small>'+esc(b.title?.en||b.eyebrow?.en||'Untitled section')+'</small></div><div class="row-actions"><button class="icon-btn" data-block-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button class="icon-btn" data-block-down="'+i+'" '+(i===workingData.sections.length-1?'disabled':'')+'>↓</button><button class="icon-btn" data-block-edit="'+i+'">Edit</button><button class="icon-btn danger-text" data-block-delete="'+i+'">Delete</button></div></div>').join(''):'<div class="empty">No sections yet. Add a Hero, Text, Image + text or CTA block.</div>';
+        panel.querySelectorAll('[data-add-block]').forEach(b=>b.onclick=()=>openCmsBlockEditor(b.dataset.addBlock,null));
+        panel.querySelectorAll('[data-block-edit]').forEach(b=>b.onclick=()=>openCmsBlockEditor(workingData.sections[+b.dataset.blockEdit].type,+b.dataset.blockEdit));
+        panel.querySelectorAll('[data-block-delete]').forEach(b=>b.onclick=()=>{workingData.sections.splice(+b.dataset.blockDelete,1);renderEditor()});
+        panel.querySelectorAll('[data-block-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.blockUp;[workingData.sections[i-1],workingData.sections[i]]=[workingData.sections[i],workingData.sections[i-1]];renderEditor()});
+        panel.querySelectorAll('[data-block-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.blockDown;[workingData.sections[i+1],workingData.sections[i]]=[workingData.sections[i],workingData.sections[i+1]];renderEditor()});
+      }else{
+        list.innerHTML=workingData.sections.map((s,i)=>'<div class="pb-section-row"><div class="pb-section-main"><label><input type="checkbox" data-section-visible="'+i+'" '+(s.visible!==false?'checked':'')+'> Visible</label><input class="pb-label-input" data-section-label="'+i+'" value="'+esc(s.label||'Section '+(i+1))+'"><small>'+esc(s.selector||'')+'</small></div><div class="row-actions"><button class="icon-btn" data-section-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button class="icon-btn" data-section-down="'+i+'" '+(i===workingData.sections.length-1?'disabled':'')+'>↓</button></div></div>').join('');
+        panel.querySelectorAll('[data-section-visible]').forEach(x=>x.onchange=()=>{workingData.sections[+x.dataset.sectionVisible].visible=x.checked});
+        panel.querySelectorAll('[data-section-label]').forEach(x=>x.oninput=()=>{workingData.sections[+x.dataset.sectionLabel].label=x.value});
+        panel.querySelectorAll('[data-section-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sectionUp;[workingData.sections[i-1],workingData.sections[i]]=[workingData.sections[i],workingData.sections[i-1]];workingData.sections.forEach((s,j)=>s.order=j+1);renderEditor()});
+        panel.querySelectorAll('[data-section-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sectionDown;[workingData.sections[i+1],workingData.sections[i]]=[workingData.sections[i],workingData.sections[i+1]];workingData.sections.forEach((s,j)=>s.order=j+1);renderEditor()});
+      }
+      const collectSeo=async()=>{
+        workingSeo.en={title:document.getElementById('seoTitleEn').value,description:document.getElementById('seoDescEn').value};
+        workingSeo.de={title:document.getElementById('seoTitleDe').value,description:document.getElementById('seoDescDe').value};
+        const file=document.getElementById('seoImageFile').files[0];
+        if(file)workingSeo.og_image_url=await uploadAsset(file,'seo');
+      };
+      const saveDraft=async()=>{
+        try{
+          await collectSeo();
+          const name=document.getElementById('cmsPageName').value.trim()||page.internal_name;
+          const slugInput=document.getElementById('cmsPageSlug');
+          const nextSlug=slugInput.disabled?page.slug:cmsSlug(slugInput.value);
+          const {data,error}=await db.from('cms_pages').update({
+            internal_name:name,slug:nextSlug,draft_data:workingData,draft_seo:workingSeo,
+            has_unpublished_changes:true,updated_by:session.user.id,updated_at:new Date().toISOString()
+          }).eq('id',page.id).select('*').single();
+          if(error)throw error;page=data;return data;
+        }catch(err){alert(err.message||err);throw err}
+      };
+      document.getElementById('previewCmsPage').onclick=async()=>{await collectSeo();cmsPreviewDraft(page,workingData,workingSeo)};
+      document.getElementById('saveCmsPage').onclick=async e=>{e.currentTarget.disabled=true;try{await saveDraft();e.currentTarget.textContent='Saved'}finally{e.currentTarget.disabled=false}};
+      document.getElementById('publishCmsPage').onclick=async e=>{
+        e.currentTarget.disabled=true;e.currentTarget.textContent='Publishing…';
+        try{await saveDraft();page=await cmsPublishPage(page,workingData,workingSeo);alert('Published successfully.');renderPages()}catch(err){alert(err.message||err);e.currentTarget.disabled=false;e.currentTarget.textContent='Publish'}
+      };
+    };
+    const openCmsBlockEditor=(type,index)=>{
+      const existing=index===null?null:workingData.sections[index];
+      const block=cmsClone(existing||{id:'block-'+Date.now(),type,eyebrow:{en:'',de:''},title:{en:'',de:''},body:{en:'',de:''},button_label:{en:'',de:''},button_href:'',image_url:''});
+      const needsImage=type==='hero'||type==='image_text';
+      const needsButton=type==='hero'||type==='cta';
+      openModal('<h2>'+(existing?'Edit ':'Add ')+esc(cmsBlockLabel(block))+'</h2><form id="cmsBlockForm" class="stack">'+
+        '<div class="grid-2"><label>Eyebrow EN<input name="eyebrow_en" value="'+esc(block.eyebrow?.en||'')+'"></label><label>Eyebrow DE<input name="eyebrow_de" value="'+esc(block.eyebrow?.de||'')+'"></label></div>'+
+        '<div class="grid-2"><label>Title EN<input name="title_en" value="'+esc(block.title?.en||'')+'"></label><label>Title DE<input name="title_de" value="'+esc(block.title?.de||'')+'"></label></div>'+
+        '<div class="grid-2"><label>Body EN<textarea name="body_en" rows="5">'+esc(block.body?.en||'')+'</textarea></label><label>Body DE<textarea name="body_de" rows="5">'+esc(block.body?.de||'')+'</textarea></label></div>'+
+        (needsImage?'<label class="upload-field">Image'+(block.image_url?'<img class="image-preview" src="'+esc(block.image_url)+'" alt="">':'')+'<input name="image_file" type="file" accept="image/*"></label>':'')+
+        (needsButton?'<div class="grid-3"><label>Button EN<input name="button_en" value="'+esc(block.button_label?.en||'')+'"></label><label>Button DE<input name="button_de" value="'+esc(block.button_label?.de||'')+'"></label><label>Button destination<input name="button_href" value="'+esc(block.button_href||'')+'" placeholder="products.html"></label></div>':'')+
+        '<button class="btn primary">Save section</button></form>');
+      document.getElementById('cmsBlockForm').onsubmit=async e=>{
+        e.preventDefault();const ff=new FormData(e.currentTarget);
+        block.eyebrow={en:ff.get('eyebrow_en'),de:ff.get('eyebrow_de')};block.title={en:ff.get('title_en'),de:ff.get('title_de')};block.body={en:ff.get('body_en'),de:ff.get('body_de')};
+        if(needsButton){block.button_label={en:ff.get('button_en'),de:ff.get('button_de')};block.button_href=ff.get('button_href')}
+        const file=ff.get('image_file');if(needsImage&&file&&file.size){try{block.image_url=await uploadAsset(file,'page-block')}catch(err){alert(err.message||err);return}}
+        if(index===null)workingData.sections.push(block);else workingData.sections[index]=block;
+        closeModal();renderEditor();
+      };
+    };
+    renderEditor();
+  }
+
   async function renderSiteEditor(){
     if(!allowed('super_admin','marketing')){
       panel.innerHTML='<div class="card">'+notice('Live Site Editor is available to Super Admin and Marketing users.')+'</div>';
