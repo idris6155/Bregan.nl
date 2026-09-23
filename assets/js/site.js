@@ -71,24 +71,45 @@
   function applyPageOverrides(){
     const rows=[...PAGE_OVERRIDES].sort((a,b)=>(a.lang==='all'?0:1)-(b.lang==='all'?0:1));
     rows.forEach(o=>{
-      if(!o?.selector||o.kind!=='text')return;
+      if(!o?.selector)return;
       try{
         const el=document.querySelector(o.selector);
-        if(el) el.textContent=o.value ?? '';
+        if(!el)return;
+        if(o.kind==='text'){
+          const value=o.value ?? '';
+          if(el.textContent!==value)el.textContent=value;
+        }else if(o.kind==='image_src'){
+          const value=o.value ?? '';
+          if(el.getAttribute('src')!==value)el.setAttribute('src',value);
+        }else if(o.kind==='background_image'){
+          const value=String(o.value||'').replace(/["\\]/g,'');
+          const next='url("'+value+'")';
+          if(el.style.backgroundImage!==next)el.style.backgroundImage=next;
+        }
       }catch(_){}
     });
+  }
+
+  function setupOverrideObserver(){
+    let timer=0;
+    const observer=new MutationObserver(()=>{
+      clearTimeout(timer);
+      timer=setTimeout(applyPageOverrides,60);
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
   }
 
   function header(){
     const active=name=>page===name?' is-active':'';
     const enabledLangs=SETTINGS.languages?.enabled||['en','de'];
     const brandName=SETTINGS.brand?.company||'Bregan B.V.';
-    return `<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="${withLang('index.html')}" aria-label="${esc(brandName)} home"><img class="brand-logo-image" src="assets/images/bregan-logo.webp?v=4" alt="${esc(brandName)} — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary"><a class="${active('home')}" href="${withLang('index.html')}" data-i18n="nav_home">${tr('nav_home')}</a><a class="${active('products')}" href="${withLang('products.html')}" data-i18n="nav_products">${tr('nav_products')}</a><a class="${active('solutions')}" href="${withLang('solutions.html')}" data-i18n="nav_solutions">${tr('nav_solutions')}</a><a class="${active('about')}" href="${withLang('about.html')}" data-i18n="nav_about">${tr('nav_about')}</a><a class="${active('insights')}" href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a class="${active('contact')}" href="${withLang('contact.html')}" data-i18n="nav_contact">${tr('nav_contact')}</a></nav><div class="header-actions"><div class="lang-switch" aria-label="Language">${enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':''}${enabledLangs.length>1?'<span>/</span>':''}${enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':''}</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote data-i18n="quote">${tr('quote')}</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav><a href="${withLang('index.html')}">${tr('nav_home')}</a><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a href="${withLang('contact.html')}">${tr('nav_contact')}</a><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></nav></div>`;
+    const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
+    return `<div class="scroll-progress" id="scrollProgress"></div><header class="site-header" id="siteHeader"><a class="brand" href="${withLang('index.html')}" aria-label="${esc(brandName)} home"><img class="brand-logo-image" src="${esc(logoUrl)}" alt="${esc(brandName)} — a Dutch Animal Nutrition Company"></a><nav class="desktop-nav" aria-label="Primary"><a class="${active('home')}" href="${withLang('index.html')}" data-i18n="nav_home">${tr('nav_home')}</a><a class="${active('products')}" href="${withLang('products.html')}" data-i18n="nav_products">${tr('nav_products')}</a><a class="${active('solutions')}" href="${withLang('solutions.html')}" data-i18n="nav_solutions">${tr('nav_solutions')}</a><a class="${active('about')}" href="${withLang('about.html')}" data-i18n="nav_about">${tr('nav_about')}</a><a class="${active('insights')}" href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a class="${active('contact')}" href="${withLang('contact.html')}" data-i18n="nav_contact">${tr('nav_contact')}</a></nav><div class="header-actions"><div class="lang-switch" aria-label="Language">${enabledLangs.includes('en')?'<button type="button" data-lang-select="en" class="'+(state.lang==='en'?'active':'')+'">EN</button>':''}${enabledLangs.length>1?'<span>/</span>':''}${enabledLangs.includes('de')?'<button type="button" data-lang-select="de" class="'+(state.lang==='de'?'active':'')+'">DE</button>':''}</div><button class="btn btn-orange btn-sm desktop-quote" data-open-quote data-i18n="quote">${tr('quote')}</button><button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div></header><div class="mobile-panel" id="mobilePanel" aria-hidden="true"><nav><a href="${withLang('index.html')}">${tr('nav_home')}</a><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a><a href="${withLang('contact.html')}">${tr('nav_contact')}</a><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></nav></div>`;
   }
 
   function footer(){
-    const brand=SETTINGS.brand||{}; const contactEmail=brand.email||'info@bregan.nl'; const locationLabel=brand.location||'Breda · The Netherlands';
-    return `<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="assets/images/bregan-logo.webp?v=4" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>${tr('footer_blurb')}</p><div class="footer-chip">a Dutch Animal Nutrition Company</div></div><div><h4>${tr('footer_links')}</h4><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a></div><div><h4>${tr('footer_contact')}</h4><a href="mailto:${esc(contactEmail)}">${esc(contactEmail)}</a><p>${esc(locationLabel)}</p></div><div class="footer-cta"><p>${state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?'}</p><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></div></div><div class="footer-bottom container"><span>© ${new Date().getFullYear()} Bregan B.V.</span><a href="${withLang('privacy.html')}">${state.lang==='de'?'Datenschutz':'Privacy'}</a><span>${esc(locationLabel)}</span></div></footer>`;
+    const brand=SETTINGS.brand||{}; const contactEmail=brand.email||'info@bregan.nl'; const locationLabel=brand.location||'Breda · The Netherlands'; const logoUrl=SETTINGS.visuals?.logo||'assets/images/bregan-logo.webp?v=4';
+    return `<footer class="site-footer"><div class="footer-grid container"><div class="footer-brand"><div class="brand brand-footer"><img class="brand-logo-image brand-logo-image-footer" src="${esc(logoUrl)}" alt="Bregan — a Dutch Animal Nutrition Company"></div><p>${tr('footer_blurb')}</p><div class="footer-chip">a Dutch Animal Nutrition Company</div></div><div><h4>${tr('footer_links')}</h4><a href="${withLang('products.html')}">${tr('nav_products')}</a><a href="${withLang('solutions.html')}">${tr('nav_solutions')}</a><a href="${withLang('about.html')}">${tr('nav_about')}</a><a href="${withLang('insights.html')}">${state.lang==='de'?'Wissen':'Insights'}</a></div><div><h4>${tr('footer_contact')}</h4><a href="mailto:${esc(contactEmail)}">${esc(contactEmail)}</a><p>${esc(locationLabel)}</p></div><div class="footer-cta"><p>${state.lang==='de'?'Bereit für die nächste Futterlösung?':'Ready for your next feed solution?'}</p><button class="btn btn-orange" data-open-quote>${tr('quote')}</button></div></div><div class="footer-bottom container"><span>© ${new Date().getFullYear()} Bregan B.V.</span><a href="${withLang('privacy.html')}">${state.lang==='de'?'Datenschutz':'Privacy'}</a><span>${esc(locationLabel)}</span></div></footer>`;
   }
 
   function formMarkup(id){
@@ -269,7 +290,7 @@
     ${related.length?`<section class="related-products section"><div class="container"><div class="section-heading reveal"><div class="eyebrow">${state.lang==='de'?'WEITER ENTDECKEN':'KEEP EXPLORING'}</div><h2>${state.lang==='de'?'Verwandte Bregan-Produkte.':'Related Bregan products.'}</h2></div><div class="related-product-grid">${relatedCards}</div></div></section>`:''}`;
   }
   function setupContactPage(){const h=document.getElementById('contactFormHost');if(!h)return;h.innerHTML=formMarkup('contactForm');const product=new URLSearchParams(location.search).get('product');if(product)h.querySelector('[name="product"]').value=product}
-  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();applyPageOverrides();setTimeout(applyPageOverrides,350);setTimeout(applyPageOverrides,1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
+  async function init(){await hydrateCms();injectShell();applyLanguage();setupNavigation();renderFeatured();renderProductFinder();renderProductDetail();setupContactPage();setupSeo();setupForms();setupMotion();applyPageOverrides();setupOverrideObserver();setTimeout(applyPageOverrides,350);setTimeout(applyPageOverrides,1100);addEventListener('keydown',e=>{if(e.key==='Escape')closeQuote()})}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
 
