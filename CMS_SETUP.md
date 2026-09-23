@@ -64,3 +64,32 @@ Products, events and text entries can be published or kept out of the public sit
 ## Security
 
 All exposed CMS tables use Row Level Security. Public visitors can read only public/published content and submit inquiries. Editing requires an authenticated user with an authorized CMS role. The Supabase service-role key is used only inside the protected server-side Edge Function that creates staff accounts and is never included in browser code.
+
+
+## Page Builder and publishing workflow
+
+The CMS now includes a no-code page management layer.
+
+### Pages & Builder
+- Existing Bregan pages can have sections shown, hidden and reordered.
+- New custom pages can be created without adding a new HTML file.
+- Custom page blocks currently include Hero, Text, Image + text and CTA.
+- Each page has English/German SEO title, description and social share image.
+- Custom page URLs use the generic renderer: `page.html?slug=<page-slug>`.
+
+### Navigation & Footer
+- Header menu items can be added, edited, hidden, deleted and reordered.
+- Menu items can point to any published CMS page.
+- Footer blurb, brand chip, CTA and Privacy link visibility are editable.
+
+### Draft / Preview / Publish
+- **Save draft** does not change the public website.
+- **Preview draft** shows the unpublished page structure.
+- **Publish** copies the draft into the public version and creates a revision.
+
+### Version History
+Every Page Builder, Navigation and Footer publish creates a revision.
+**Restore to draft** never changes the live website immediately. Review the restored draft first, then publish it.
+
+### Public access boundary
+Anonymous website visitors can read only published CMS page/global columns. Draft page data, draft SEO and draft global settings are not granted to the anonymous role.
